@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npm --version)",
+      "Bash(npx prisma:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run db:seed:*)",
+      "Bash(npx npm-check-updates:*)",
+      "Bash(npx:*)",
+      "Bash(echo:*)",
+      "Bash(\"/c/Program Files/nodejs/npm\" --version)",
+      "Bash(cmd.exe /c \"cd C:\\\\Nest\\\\eyada && npm install\")",
+      "Bash(cmd.exe /c \"cd C:\\\\Nest\\\\eyada && npm.cmd install 2>&1\")",
+      "Bash(powershell.exe -Command \"cd C:\\\\Nest\\\\eyada; npm install\")",
+      "Bash(powershell.exe -Command \"cd C:\\\\Nest\\\\eyada; npx prisma migrate dev --name init\")",
+      "WebSearch",
+      "Bash(powershell.exe -Command \"cd C:\\\\Nest\\\\eyada; npm install dotenv\")",
+      "Bash(powershell.exe -Command \"cd C:\\\\Nest\\\\eyada; Move-Item prisma\\\\prisma.config.ts .\\\\prisma.config.ts -Force\")",
+      "Bash(ls:*)",
+      "Bash(powershell.exe -Command \"cd C:\\\\Nest\\\\eyada; npx prisma generate\")",
+      "Bash(powershell.exe -Command \"cd C:\\\\Nest\\\\eyada; npm run start:dev 2>&1\")"
+    ]
+  }
+}

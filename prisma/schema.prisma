@@ -1,0 +1,472 @@
+// Clinic Booking System - Prisma Schema
+// نظام حجز العيادات الطبية
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum Role {
+  ADMIN
+  DOCTOR
+  SECRETARY
+  PATIENT
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CHECKED_IN
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+}
+
+enum ServiceType {
+  FIRST_VISIT
+  RE_VISIT
+  CONSULTATION_PHONE
+  CONSULTATION_VIDEO
+}
+
+enum DayOfWeek {
+  SUNDAY    @map("0")
+  MONDAY    @map("1")
+  TUESDAY   @map("2")
+  WEDNESDAY @map("3")
+  THURSDAY  @map("4")
+  FRIDAY    @map("5")
+  SATURDAY  @map("6")
+}
+
+enum DoctorStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum RelationshipType {
+  SELF
+  SPOUSE
+  CHILD
+  PARENT
+  SIBLING
+  OTHER
+}
+
+// ============================================
+// USER & AUTHENTICATION
+// ============================================
+
+model User {
+  id                String    @id @default(uuid())
+  email             String    @unique
+  phoneNumber       String    @unique @map("phone_number")
+  passwordHash      String    @map("password_hash")
+  fullName          String    @map("full_name")
+  role              Role      @default(PATIENT)
+  isActive          Boolean   @default(true) @map("is_active")
+  isApproved        Boolean   @default(false) @map("is_approved") // For doctors only
+  lastLoginAt       DateTime? @map("last_login_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  doctorProfile     DoctorProfile?
+  patientProfile    PatientProfile?
+  refreshTokens     RefreshToken[]
+  auditLogs         AuditLog[]      @relation("PerformedBy")
+
+  @@index([email])
+  @@index([phoneNumber])
+  @@index([role])
+  @@map("users")
+}
+
+model RefreshToken {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  token       String    @unique
+  expiresAt   DateTime  @map("expires_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  revokedAt   DateTime? @map("revoked_at")
+  deviceInfo  String?   @map("device_info")
+  ipAddress   String?   @map("ip_address")
+
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("refresh_tokens")
+}
+
+// ============================================
+// DOCTOR PROFILE
+// ============================================
+
+model DoctorProfile {
+  id                  String        @id @default(uuid())
+  userId              String        @unique @map("user_id")
+  specialtyId         String        @map("specialty_id")
+  licenseNumber       String?       @unique @map("license_number")
+  yearsOfExperience   Int?          @map("years_of_experience")
+  qualifications      Json?                                        // {ar: string, en: string}
+  bio                 Json?                                        // {ar: string, en: string}
+  profileImage        String?       @map("profile_image")
+  showPhoneNumber     Boolean       @default(false) @map("show_phone_number")
+  showWhatsappNumber  Boolean       @default(false) @map("show_whatsapp_number")
+  whatsappNumbers     String[]      @map("whatsapp_numbers")
+  status              DoctorStatus  @default(PENDING)
+  averageRating       Float         @default(0) @map("average_rating")
+  totalRatings        Int           @default(0) @map("total_ratings")
+  totalAppointments   Int           @default(0) @map("total_appointments")
+  approvedAt          DateTime?     @map("approved_at")
+  approvedBy          String?       @map("approved_by")
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  user                User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  specialty           Specialty     @relation(fields: [specialtyId], references: [id])
+  clinics             Clinic[]
+  appointments        Appointment[] @relation("DoctorAppointments")
+  ratings             Rating[]
+
+  @@index([specialtyId])
+  @@index([status])
+  @@map("doctor_profiles")
+}
+
+// ============================================
+// PATIENT PROFILE
+// ============================================
+
+model PatientProfile {
+  id                       String           @id @default(uuid())
+  userId                   String           @unique @map("user_id")
+  dateOfBirth              DateTime?        @map("date_of_birth")
+  age                      Int?
+  gender                   Gender?
+  whatsappNumber           String?          @map("whatsapp_number")
+  usePhoneAsWhatsapp       Boolean          @default(true) @map("use_phone_as_whatsapp")
+  bloodType                String?          @map("blood_type")
+  chronicDiseasesEncrypted String?          @map("chronic_diseases_encrypted") // Encrypted JSON
+  allergiesEncrypted       String?          @map("allergies_encrypted")        // Encrypted JSON
+
+  // Family Management
+  familyHeadId             String?          @map("family_head_id")
+  relationshipToHead       RelationshipType @default(SELF) @map("relationship_to_head")
+
+  createdAt                DateTime         @default(now()) @map("created_at")
+  updatedAt                DateTime         @updatedAt @map("updated_at")
+
+  // Relations
+  user                     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  familyHead               PatientProfile?  @relation("FamilyMembers", fields: [familyHeadId], references: [id])
+  familyMembers            PatientProfile[] @relation("FamilyMembers")
+  bookedAppointments       Appointment[]    @relation("BookedBy")
+  appointmentsFor          Appointment[]    @relation("AppointmentFor")
+  ratings                  Rating[]
+
+  @@index([familyHeadId])
+  @@map("patient_profiles")
+}
+
+// ============================================
+// SPECIALTY
+// ============================================
+
+model Specialty {
+  id          String          @id @default(uuid())
+  name        Json                                    // {ar: string, en: string}
+  description Json?                                   // {ar: string, en: string}
+  icon        String?
+  isActive    Boolean         @default(true) @map("is_active")
+  sortOrder   Int             @default(0) @map("sort_order")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  // Relations
+  doctors     DoctorProfile[]
+
+  @@map("specialties")
+}
+
+// ============================================
+// LOCATIONS (States & Cities)
+// ============================================
+
+model State {
+  id          String    @id @default(uuid())
+  name        Json                              // {ar: string, en: string}
+  code        String    @unique                 // e.g., "CAI", "GIZ"
+  isActive    Boolean   @default(true) @map("is_active")
+  sortOrder   Int       @default(0) @map("sort_order")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  cities      City[]
+
+  @@index([code])
+  @@map("states")
+}
+
+model City {
+  id          String    @id @default(uuid())
+  stateId     String    @map("state_id")
+  name        Json                              // {ar: string, en: string}
+  isActive    Boolean   @default(true) @map("is_active")
+  sortOrder   Int       @default(0) @map("sort_order")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  state       State     @relation(fields: [stateId], references: [id])
+  clinics     Clinic[]
+
+  @@index([stateId])
+  @@map("cities")
+}
+
+// ============================================
+// CLINIC
+// ============================================
+
+model Clinic {
+  id                String    @id @default(uuid())
+  doctorProfileId   String    @map("doctor_profile_id")
+  cityId            String    @map("city_id")
+  name              Json                              // {ar: string, en: string}
+  description       Json?                             // {ar: string, en: string}
+  address           Json                              // {ar: string, en: string}
+  buildingNumber    String?   @map("building_number")
+  floorNumber       String?   @map("floor_number")
+  clinicNumber      String?   @map("clinic_number")
+  landmark          Json?                             // {ar: string, en: string}
+  latitude          Float?
+  longitude         Float?
+  phoneNumbers      String[]  @map("phone_numbers")
+  whatsappNumbers   String[]  @map("whatsapp_numbers")
+  images            String[]
+  isActive          Boolean   @default(true) @map("is_active")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  doctorProfile     DoctorProfile     @relation(fields: [doctorProfileId], references: [id], onDelete: Cascade)
+  city              City              @relation(fields: [cityId], references: [id])
+  schedules         ClinicSchedule[]
+  serviceTypes      ClinicServiceType[]
+  appointments      Appointment[]
+  secretaries       ClinicSecretary[]
+
+  @@index([doctorProfileId])
+  @@index([cityId])
+  @@map("clinics")
+}
+
+model ClinicSecretary {
+  id          String    @id @default(uuid())
+  clinicId    String    @map("clinic_id")
+  userId      String    @map("user_id")            // User with SECRETARY role
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  clinic      Clinic    @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  @@unique([clinicId, userId])
+  @@index([userId])
+  @@map("clinic_secretaries")
+}
+
+// ============================================
+// CLINIC SCHEDULE
+// ============================================
+
+model ClinicSchedule {
+  id              String      @id @default(uuid())
+  clinicId        String      @map("clinic_id")
+  dayOfWeek       DayOfWeek   @map("day_of_week")
+  shifts          Json                              // Array of {startTime, endTime, breakTime?}
+  slotDuration    Int         @default(20) @map("slot_duration")  // in minutes
+  isActive        Boolean     @default(true) @map("is_active")
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  clinic          Clinic      @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+
+  @@unique([clinicId, dayOfWeek])
+  @@index([clinicId])
+  @@map("clinic_schedules")
+}
+
+// ============================================
+// SERVICE TYPES & PRICING
+// ============================================
+
+model ClinicServiceType {
+  id                   String        @id @default(uuid())
+  doctorProfileId      String        @map("doctor_profile_id")
+  clinicId             String?       @map("clinic_id")          // Optional - null means applies to all clinics
+  serviceType          ServiceType   @map("service_type")
+  name                 Json?                                     // {ar: string, en: string} - optional custom name
+  price                Decimal       @db.Decimal(10, 2)
+  duration             Int           @default(20)                // in minutes
+  reVisitValidityDays  Int?          @map("re_visit_validity_days") // for re-visit pricing
+  isActive             Boolean       @default(true) @map("is_active")
+  createdAt            DateTime      @default(now()) @map("created_at")
+  updatedAt            DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  clinic               Clinic?       @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  appointments         Appointment[]
+
+  @@index([doctorProfileId])
+  @@index([clinicId])
+  @@map("clinic_service_types")
+}
+
+// ============================================
+// APPOINTMENT
+// ============================================
+
+model Appointment {
+  id                    String              @id @default(uuid())
+  bookingNumber         String              @unique @map("booking_number")   // e.g., "APT-20240115-001"
+  clinicId              String              @map("clinic_id")
+  doctorProfileId       String              @map("doctor_profile_id")
+  patientProfileId      String              @map("patient_profile_id")       // Who booked
+  bookedForPatientId    String              @map("booked_for_patient_id")    // Who the appointment is for
+  serviceTypeId         String              @map("service_type_id")
+
+  // Scheduling
+  appointmentDate       DateTime            @map("appointment_date") @db.Date
+  appointmentTime       String              @map("appointment_time")         // "14:30"
+  queueNumber           Int?                @map("queue_number")             // Position in queue
+  estimatedWaitTime     Int?                @map("estimated_wait_time")      // in minutes
+
+  // Status
+  status                AppointmentStatus   @default(PENDING)
+  paymentStatus         PaymentStatus       @default(PENDING) @map("payment_status")
+  paymentMethod         String?             @map("payment_method")           // cash, card, insurance
+
+  // Snapshot Data (at time of booking)
+  patientName           String              @map("patient_name")
+  patientAge            Int?                @map("patient_age")
+  serviceName           Json                @map("service_name")             // {ar, en}
+  price                 Decimal             @db.Decimal(10, 2)
+
+  // Patient Notes
+  patientNotes          String?             @map("patient_notes")
+  symptoms              String?
+
+  // Medical Notes (Encrypted - Doctor fills these)
+  diagnosisEncrypted    String?             @map("diagnosis_encrypted")
+  prescriptionEncrypted String?             @map("prescription_encrypted")
+  doctorNotesEncrypted  String?             @map("doctor_notes_encrypted")
+
+  // Cancellation
+  cancellationReason    String?             @map("cancellation_reason")
+  cancelledById         String?             @map("cancelled_by_id")
+  cancelledAt           DateTime?           @map("cancelled_at")
+
+  // Metadata
+  bookedBy              String              @map("booked_by")                // patient, secretary, doctor
+  bookedById            String              @map("booked_by_id")             // User ID
+  completedAt           DateTime?           @map("completed_at")
+  createdAt             DateTime            @default(now()) @map("created_at")
+  updatedAt             DateTime            @updatedAt @map("updated_at")
+
+  // Relations
+  clinic                Clinic              @relation(fields: [clinicId], references: [id])
+  doctorProfile         DoctorProfile       @relation("DoctorAppointments", fields: [doctorProfileId], references: [id])
+  patientProfile        PatientProfile      @relation("BookedBy", fields: [patientProfileId], references: [id])
+  bookedForPatient      PatientProfile      @relation("AppointmentFor", fields: [bookedForPatientId], references: [id])
+  serviceType           ClinicServiceType   @relation(fields: [serviceTypeId], references: [id])
+  rating                Rating?
+
+  @@index([clinicId])
+  @@index([doctorProfileId])
+  @@index([patientProfileId])
+  @@index([bookedForPatientId])
+  @@index([appointmentDate])
+  @@index([status])
+  @@index([bookingNumber])
+  @@index([doctorProfileId, appointmentDate, status])
+  @@index([clinicId, appointmentDate])
+  @@map("appointments")
+}
+
+// ============================================
+// RATINGS & REVIEWS
+// ============================================
+
+model Rating {
+  id                String          @id @default(uuid())
+  appointmentId     String          @unique @map("appointment_id")
+  doctorProfileId   String          @map("doctor_profile_id")
+  patientProfileId  String          @map("patient_profile_id")
+  rating            Int                                               // 1-5
+  review            String?
+  isVisible         Boolean         @default(true) @map("is_visible")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  // Relations
+  appointment       Appointment     @relation(fields: [appointmentId], references: [id])
+  doctorProfile     DoctorProfile   @relation(fields: [doctorProfileId], references: [id])
+  patientProfile    PatientProfile  @relation(fields: [patientProfileId], references: [id])
+
+  @@index([doctorProfileId])
+  @@index([patientProfileId])
+  @@map("ratings")
+}
+
+// ============================================
+// AUDIT LOG
+// ============================================
+
+model AuditLog {
+  id            String    @id @default(uuid())
+  userId        String?   @map("user_id")
+  action        String                           // e.g., "LOGIN", "PASSWORD_CHANGE", "ADMIN_ACTION"
+  entityType    String?   @map("entity_type")    // e.g., "Appointment", "User"
+  entityId      String?   @map("entity_id")
+  oldValue      Json?     @map("old_value")
+  newValue      Json?     @map("new_value")
+  ipAddress     String?   @map("ip_address")
+  userAgent     String?   @map("user_agent")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  user          User?     @relation("PerformedBy", fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
