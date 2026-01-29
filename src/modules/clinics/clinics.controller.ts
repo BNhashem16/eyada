@@ -48,6 +48,7 @@ export class DoctorClinicsController {
 
   @Get()
   findMyClinics(@CurrentUser() user: JwtUserPayload) {
+    console.log(user);
     return this.clinicsService.findByDoctor(user.id);
   }
 
