@@ -42,7 +42,15 @@ export class DoctorsService {
     return this.prisma.doctorProfile.create({
       data: {
         userId,
-        ...createDto,
+        specialtyId: createDto.specialtyId,
+        licenseNumber: createDto.licenseNumber,
+        yearsOfExperience: createDto.yearsOfExperience,
+        qualifications: createDto.qualifications as any,
+        bio: createDto.bio as any,
+        profileImage: createDto.profileImage,
+        showPhoneNumber: createDto.showPhoneNumber,
+        showWhatsappNumber: createDto.showWhatsappNumber,
+        whatsappNumbers: createDto.whatsappNumbers,
         status: DoctorStatus.PENDING,
       },
     });
@@ -212,7 +220,17 @@ export class DoctorsService {
 
     return this.prisma.doctorProfile.update({
       where: { userId },
-      data: updateDto,
+      data: {
+        specialtyId: updateDto.specialtyId,
+        licenseNumber: updateDto.licenseNumber,
+        yearsOfExperience: updateDto.yearsOfExperience,
+        qualifications: updateDto.qualifications as any,
+        bio: updateDto.bio as any,
+        profileImage: updateDto.profileImage,
+        showPhoneNumber: updateDto.showPhoneNumber,
+        showWhatsappNumber: updateDto.showWhatsappNumber,
+        whatsappNumbers: updateDto.whatsappNumbers,
+      },
     });
   }
 

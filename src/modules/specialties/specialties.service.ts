@@ -10,11 +10,9 @@ export class SpecialtiesService {
   async create(createSpecialtyDto: CreateSpecialtyDto): Promise<Specialty> {
     return this.prisma.specialty.create({
       data: {
+        ...createSpecialtyDto,
         name: createSpecialtyDto.name as any,
         description: createSpecialtyDto.description as any,
-        icon: createSpecialtyDto.icon,
-        sortOrder: createSpecialtyDto.sortOrder,
-        isActive: createSpecialtyDto.isActive,
       },
     });
   }
@@ -51,11 +49,9 @@ export class SpecialtiesService {
     return this.prisma.specialty.update({
       where: { id },
       data: {
+        ...updateSpecialtyDto,
         name: updateSpecialtyDto.name as any,
         description: updateSpecialtyDto.description as any,
-        icon: updateSpecialtyDto.icon,
-        sortOrder: updateSpecialtyDto.sortOrder,
-        isActive: updateSpecialtyDto.isActive,
       },
     });
   }

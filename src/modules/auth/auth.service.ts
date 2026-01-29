@@ -18,12 +18,12 @@ import { JwtPayload } from '../../common/interfaces';
 import { v4 as uuidv4 } from 'uuid';
 import { Role } from '../../common/enums';
 
-interface AuthTokens {
+export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
 }
 
-interface AuthResponse extends AuthTokens {
+export interface AuthResponse extends AuthTokens {
   user: {
     id: string;
     email: string;
@@ -159,8 +159,8 @@ export class AuthService {
       storedToken.user.id,
       storedToken.user.email,
       storedToken.user.role as Role,
-      storedToken.ipAddress,
-      storedToken.deviceInfo,
+      storedToken.ipAddress ?? undefined,
+      storedToken.deviceInfo ?? undefined,
     );
   }
 
@@ -228,14 +228,14 @@ export class AuthService {
       role,
     };
 
-    const accessToken = this.jwtService.sign(payload, {
-      expiresIn: this.configService.get<string>('jwt.accessExpiration'),
+    const accessToken = this.jwtService.sign(payload as any, {
+      expiresIn: (this.configService.get<string>('jwt.accessExpiration') ||
+        '15m') as any,
     });
 
     const refreshToken = uuidv4();
-    const refreshExpiration = this.configService.get<string>(
-      'jwt.refreshExpiration',
-    );
+    const refreshExpiration =
+      this.configService.get<string>('jwt.refreshExpiration') || '7d';
 
     // Parse expiration (e.g., '365d' -> 365 days)
     const expiresAt = this.parseExpiration(refreshExpiration);

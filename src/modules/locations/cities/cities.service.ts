@@ -19,10 +19,8 @@ export class CitiesService {
 
     return this.prisma.city.create({
       data: {
+        ...createCityDto,
         name: createCityDto.name as any,
-        stateId: createCityDto.stateId,
-        isActive: createCityDto.isActive,
-        sortOrder: createCityDto.sortOrder,
       },
     });
   }
@@ -76,10 +74,8 @@ export class CitiesService {
     return this.prisma.city.update({
       where: { id },
       data: {
+        ...updateCityDto,
         name: updateCityDto.name as any,
-        stateId: updateCityDto.stateId,
-        isActive: updateCityDto.isActive,
-        sortOrder: updateCityDto.sortOrder,
       },
     });
   }

@@ -12,6 +12,7 @@ import {
 import { AppointmentsService } from './appointments.service';
 import {
   CreateAppointmentDto,
+  CreateSecretaryAppointmentDto,
   UpdateAppointmentStatusDto,
   UpdateMedicalNotesDto,
   UpdatePaymentStatusDto,
@@ -131,5 +132,72 @@ export class DoctorAppointmentsController {
     @Body() updateDto: UpdatePaymentStatusDto,
   ) {
     return this.appointmentsService.updatePaymentStatus(user.id, id, updateDto);
+  }
+}
+
+// Secretary endpoints
+@Controller('secretary/appointments')
+@UseGuards(RolesGuard)
+@Roles(Role.SECRETARY)
+export class SecretaryAppointmentsController {
+  constructor(private readonly appointmentsService: AppointmentsService) {}
+
+  @Get('clinics')
+  getMyClinics(@CurrentUser() user: JwtUserPayload) {
+    return this.appointmentsService.getSecretaryClinics(user.id);
+  }
+
+  @Get()
+  findClinicAppointments(
+    @CurrentUser() user: JwtUserPayload,
+    @Query('clinicId') clinicId?: string,
+    @Query('date') dateStr?: string,
+    @Query('status') status?: AppointmentStatus,
+  ) {
+    const date = dateStr ? new Date(dateStr) : undefined;
+    return this.appointmentsService.findBySecretary(user.id, {
+      clinicId,
+      date,
+      status,
+    });
+  }
+
+  @Post()
+  createForPatient(
+    @CurrentUser() user: JwtUserPayload,
+    @Body() createDto: CreateSecretaryAppointmentDto,
+  ) {
+    return this.appointmentsService.createBySecretary(user.id, createDto);
+  }
+
+  @Get(':id')
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.appointmentsService.findById(id);
+  }
+
+  @Patch(':id/status')
+  updateStatus(
+    @CurrentUser() user: JwtUserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateDto: UpdateAppointmentStatusDto,
+  ) {
+    return this.appointmentsService.updateStatusBySecretary(
+      user.id,
+      id,
+      updateDto,
+    );
+  }
+
+  @Patch(':id/payment')
+  updatePaymentStatus(
+    @CurrentUser() user: JwtUserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateDto: UpdatePaymentStatusDto,
+  ) {
+    return this.appointmentsService.updatePaymentStatusBySecretary(
+      user.id,
+      id,
+      updateDto,
+    );
   }
 }

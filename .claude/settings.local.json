@@ -1,4 +1,30 @@
 {
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -Command \"[System.Media.SystemSounds]::Asterisk.Play(); Import-Module BurntToast; New-BurntToastNotification -Text 'Claude finished', 'Task completed successfully.' -Sound 'Default'\"",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "AskUserQuestion",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe -Command \"[System.Media.SystemSounds]::Exclamation.Play(); Import-Module BurntToast; New-BurntToastNotification -Text 'Claude has a question', 'Claude needs your answer to continue.' -Sound 'Alarm2'\"",
+            "async": true
+          }
+        ]
+      }
+    ]
+  },
   "permissions": {
     "allow": [
       "Bash(npm install:*)",
@@ -19,7 +45,9 @@
       "Bash(powershell.exe -Command \"cd C:\\\\Nest\\\\eyada; Move-Item prisma\\\\prisma.config.ts .\\\\prisma.config.ts -Force\")",
       "Bash(ls:*)",
       "Bash(powershell.exe -Command \"cd C:\\\\Nest\\\\eyada; npx prisma generate\")",
-      "Bash(powershell.exe -Command \"cd C:\\\\Nest\\\\eyada; npm run start:dev 2>&1\")"
+      "Bash(powershell.exe -Command \"cd C:\\\\Nest\\\\eyada; npm run start:dev 2>&1\")",
+      "Bash(npm run start:dev:*)",
+      "Bash(node_modules/.bin/tsc:*)"
     ]
   }
 }

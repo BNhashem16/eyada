@@ -1,0 +1,2053 @@
+{
+  "info": {
+    "_postman_id": "eyada-complete-api",
+    "name": "Eyada - Complete API Collection",
+    "description": "# Eyada Clinic Management System - Complete API\n\nProfessional Postman Collection covering ALL API endpoints.\n\n## Roles\n- **ADMIN**: System administration\n- **DOCTOR**: Clinic & appointment management\n- **SECRETARY**: Appointment booking & management\n- **PATIENT**: Booking & profile management\n\n## Features\n- Auto token management\n- Auto token refresh\n- Pre-request scripts\n- Response validation tests\n- Environment variables\n\n## Quick Start\n1. Import Collection & Environment\n2. Select **Eyada - Complete Environment**\n3. Choose your role folder\n4. Start with Login\n\n## Token Flow\n- Access Token: 15 minutes\n- Refresh Token: 7 days\n- Auto-refresh before expiry",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// ============================================",
+          "// GLOBAL PRE-REQUEST: Auto Token Refresh",
+          "// ============================================",
+          "",
+          "const noAuthEndpoints = [",
+          "    '/auth/login',",
+          "    '/auth/register', ",
+          "    '/auth/refresh',",
+          "    '/clinics',",
+          "    '/doctors',",
+          "    '/specialties',",
+          "    '/states',",
+          "    '/cities'",
+          "];",
+          "",
+          "const currentPath = pm.request.url.getPath();",
+          "const isPublic = noAuthEndpoints.some(ep => currentPath.startsWith(ep) || currentPath === ep);",
+          "",
+          "// Skip for public endpoints",
+          "if (isPublic && !currentPath.includes('/doctors/profile') && !currentPath.includes('/doctors/clinics') && !currentPath.includes('/doctors/appointments') && !currentPath.includes('/doctors/ratings')) {",
+          "    return;",
+          "}",
+          "",
+          "const accessToken = pm.environment.get('accessToken');",
+          "const refreshToken = pm.environment.get('refreshToken');",
+          "const tokenExpiry = pm.environment.get('tokenExpiry');",
+          "",
+          "if (!accessToken) {",
+          "    console.warn('⚠️ No access token. Please login first.');",
+          "    return;",
+          "}",
+          "",
+          "// Check expiry with 1 minute buffer",
+          "const now = Date.now();",
+          "const expiry = parseInt(tokenExpiry) || 0;",
+          "",
+          "if (expiry && now >= expiry - 60000) {",
+          "    console.log('🔄 Token expiring soon. Refreshing...');",
+          "    ",
+          "    const baseUrl = pm.environment.get('baseUrl') || pm.collectionVariables.get('baseUrl');",
+          "    ",
+          "    pm.sendRequest({",
+          "        url: baseUrl + '/auth/refresh',",
+          "        method: 'POST',",
+          "        header: { 'Content-Type': 'application/json' },",
+          "        body: {",
+          "            mode: 'raw',",
+          "            raw: JSON.stringify({ refreshToken: refreshToken })",
+          "        }",
+          "    }, (err, res) => {",
+          "        if (!err && res.code === 200) {",
+          "            const data = res.json();",
+          "            pm.environment.set('accessToken', data.accessToken);",
+          "            pm.environment.set('refreshToken', data.refreshToken);",
+          "            pm.environment.set('tokenExpiry', Date.now() + 15 * 60 * 1000);",
+          "            console.log('✅ Token refreshed!');",
+          "        } else {",
+          "            console.error('❌ Refresh failed. Please login again.');",
+          "        }",
+          "    });",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// ============================================",
+          "// GLOBAL TESTS",
+          "// ============================================",
+          "",
+          "// Response time logging",
+          "const responseTime = pm.response.responseTime;",
+          "if (responseTime > 1000) {",
+          "    console.warn('⚠️ Slow response: ' + responseTime + 'ms');",
+          "} else {",
+          "    console.log('⚡ Response: ' + responseTime + 'ms');",
+          "}",
+          "",
+          "// Error handling",
+          "if (pm.response.code === 401) {",
+          "    console.error('🔒 Unauthorized - Please login');",
+          "}",
+          "if (pm.response.code === 403) {",
+          "    console.error('🚫 Forbidden - Wrong role');",
+          "}",
+          "if (pm.response.code >= 500) {",
+          "    console.error('💥 Server Error');",
+          "}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "description": "Authentication endpoints for all roles",
+      "item": [
+        {
+          "name": "Register (Patient)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Registration successful', () => {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "    const data = pm.response.json();",
+                  "    pm.environment.set('accessToken', data.accessToken);",
+                  "    pm.environment.set('refreshToken', data.refreshToken);",
+                  "    pm.environment.set('userId', data.user.id);",
+                  "    pm.environment.set('tokenExpiry', Date.now() + 15 * 60 * 1000);",
+                  "    console.log('✅ Registered as:', data.user.fullName);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"patient@example.com\",\n    \"password\": \"Patient@123\",\n    \"fullName\": \"محمد أحمد\",\n    \"phoneNumber\": \"01012345678\",\n    \"role\": \"PATIENT\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Register (Doctor)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Registration successful', () => {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "    const data = pm.response.json();",
+                  "    pm.environment.set('accessToken', data.accessToken);",
+                  "    pm.environment.set('refreshToken', data.refreshToken);",
+                  "    pm.environment.set('userId', data.user.id);",
+                  "    pm.environment.set('tokenExpiry', Date.now() + 15 * 60 * 1000);",
+                  "    console.log('✅ Registered as Doctor:', data.user.fullName);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"doctor@example.com\",\n    \"password\": \"Doctor@123\",\n    \"fullName\": \"د. أحمد محمد\",\n    \"phoneNumber\": \"01112345678\",\n    \"role\": \"DOCTOR\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Login successful', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Has tokens', () => {",
+                  "    const data = pm.response.json();",
+                  "    pm.expect(data).to.have.property('accessToken');",
+                  "    pm.expect(data).to.have.property('refreshToken');",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const data = pm.response.json();",
+                  "    ",
+                  "    // Save tokens",
+                  "    pm.environment.set('accessToken', data.accessToken);",
+                  "    pm.environment.set('refreshToken', data.refreshToken);",
+                  "    pm.environment.set('tokenExpiry', Date.now() + 15 * 60 * 1000);",
+                  "    ",
+                  "    // Save user info",
+                  "    pm.environment.set('userId', data.user.id);",
+                  "    pm.environment.set('userEmail', data.user.email);",
+                  "    pm.environment.set('userName', data.user.fullName);",
+                  "    pm.environment.set('userRole', data.user.role);",
+                  "    ",
+                  "    console.log('✅ Logged in as:', data.user.fullName);",
+                  "    console.log('👤 Role:', data.user.role);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"{{loginEmail}}\",\n    \"password\": \"{{loginPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login with any role. Set `loginEmail` and `loginPassword` in environment."
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Refresh successful', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const data = pm.response.json();",
+                  "    pm.environment.set('accessToken', data.accessToken);",
+                  "    pm.environment.set('refreshToken', data.refreshToken);",
+                  "    pm.environment.set('tokenExpiry', Date.now() + 15 * 60 * 1000);",
+                  "    console.log('✅ Tokens refreshed');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
+            }
+          }
+        },
+        {
+          "name": "Get My Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Profile retrieved', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            }
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"currentPassword\": \"OldPassword@123\",\n    \"newPassword\": \"NewPassword@123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/change-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "change-password"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    console.log('✅ Logged out');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            }
+          }
+        },
+        {
+          "name": "Logout All Devices",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    pm.environment.unset('accessToken');",
+                  "    pm.environment.unset('refreshToken');",
+                  "    pm.environment.unset('tokenExpiry');",
+                  "    console.log('✅ Logged out from all devices');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout-all",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout-all"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🌐 Public APIs",
+      "description": "Public endpoints - No authentication required",
+      "item": [
+        {
+          "name": "Doctors",
+          "item": [
+            {
+              "name": "Search Doctors",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                      "",
+                      "if (pm.response.code === 200) {",
+                      "    const doctors = pm.response.json();",
+                      "    if (Array.isArray(doctors) && doctors.length > 0) {",
+                      "        pm.environment.set('doctorProfileId', doctors[0].id);",
+                      "        console.log('Found', doctors.length, 'doctor(s)');",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/doctors?specialtyId={{specialtyId}}&cityId={{cityId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors"],
+                  "query": [
+                    { "key": "specialtyId", "value": "{{specialtyId}}", "disabled": true },
+                    { "key": "cityId", "value": "{{cityId}}", "disabled": true }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Doctor Details",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/{{doctorProfileId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "{{doctorProfileId}}"]
+                }
+              }
+            },
+            {
+              "name": "Get Doctor Ratings",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/{{doctorProfileId}}/ratings?limit=10&offset=0",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "{{doctorProfileId}}", "ratings"],
+                  "query": [
+                    { "key": "limit", "value": "10" },
+                    { "key": "offset", "value": "0" }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Clinics",
+          "item": [
+            {
+              "name": "Search Clinics",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                      "",
+                      "if (pm.response.code === 200) {",
+                      "    const clinics = pm.response.json();",
+                      "    if (Array.isArray(clinics) && clinics.length > 0) {",
+                      "        pm.environment.set('clinicId', clinics[0].id);",
+                      "        console.log('Found', clinics.length, 'clinic(s)');",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/clinics?cityId={{cityId}}&specialtyId={{specialtyId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["clinics"],
+                  "query": [
+                    { "key": "cityId", "value": "{{cityId}}", "disabled": true },
+                    { "key": "specialtyId", "value": "{{specialtyId}}", "disabled": true }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Clinic Details",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/clinics/{{clinicId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["clinics", "{{clinicId}}"]
+                }
+              }
+            },
+            {
+              "name": "Get Clinic Services",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const services = pm.response.json();",
+                      "    if (Array.isArray(services) && services.length > 0) {",
+                      "        pm.environment.set('serviceTypeId', services[0].id);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/clinics/{{clinicId}}/services",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["clinics", "{{clinicId}}", "services"]
+                }
+              }
+            },
+            {
+              "name": "Get Clinic Schedules",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/clinics/{{clinicId}}/schedules",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["clinics", "{{clinicId}}", "schedules"]
+                }
+              }
+            },
+            {
+              "name": "Get Available Slots",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      "const tomorrow = new Date();",
+                      "tomorrow.setDate(tomorrow.getDate() + 1);",
+                      "pm.environment.set('slotDate', tomorrow.toISOString().split('T')[0]);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/clinics/{{clinicId}}/available-slots?date={{slotDate}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["clinics", "{{clinicId}}", "available-slots"],
+                  "query": [{ "key": "date", "value": "{{slotDate}}" }]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Specialties",
+          "item": [
+            {
+              "name": "Get All Specialties",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const data = pm.response.json();",
+                      "    if (Array.isArray(data) && data.length > 0) {",
+                      "        pm.environment.set('specialtyId', data[0].id);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/specialties",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["specialties"]
+                }
+              }
+            },
+            {
+              "name": "Get Specialty",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/specialties/{{specialtyId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["specialties", "{{specialtyId}}"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Locations",
+          "item": [
+            {
+              "name": "Get All States",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const data = pm.response.json();",
+                      "    if (Array.isArray(data) && data.length > 0) {",
+                      "        pm.environment.set('stateId', data[0].id);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/states",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["states"]
+                }
+              }
+            },
+            {
+              "name": "Get State",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/states/{{stateId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["states", "{{stateId}}"]
+                }
+              }
+            },
+            {
+              "name": "Get All Cities",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const data = pm.response.json();",
+                      "    if (Array.isArray(data) && data.length > 0) {",
+                      "        pm.environment.set('cityId', data[0].id);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/cities?stateId={{stateId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["cities"],
+                  "query": [{ "key": "stateId", "value": "{{stateId}}", "disabled": true }]
+                }
+              }
+            },
+            {
+              "name": "Get City",
+              "request": {
+                "auth": { "type": "noauth" },
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/cities/{{cityId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["cities", "{{cityId}}"]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "👤 Patient Portal",
+      "description": "Patient role endpoints (Role: PATIENT)",
+      "item": [
+        {
+          "name": "Profile",
+          "item": [
+            {
+              "name": "Get My Profile",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const data = pm.response.json();",
+                      "    pm.environment.set('patientProfileId', data.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/patients/profile",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["patients", "profile"]
+                }
+              }
+            },
+            {
+              "name": "Create Profile",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"dateOfBirth\": \"1990-01-15\",\n    \"gender\": \"MALE\",\n    \"bloodType\": \"O_POSITIVE\",\n    \"address\": \"123 شارع النيل، القاهرة\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/patients/profile",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["patients", "profile"]
+                }
+              }
+            },
+            {
+              "name": "Update Profile",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"address\": \"456 شارع الجمهورية، الجيزة\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/patients/profile",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["patients", "profile"]
+                }
+              }
+            },
+            {
+              "name": "Get Medical Data",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/patients/profile/medical",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["patients", "profile", "medical"]
+                }
+              }
+            },
+            {
+              "name": "Update Medical Data",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"chronicDiseases\": [\"السكري\", \"ضغط الدم\"],\n    \"allergies\": [\"البنسلين\"]\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/patients/profile/medical",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["patients", "profile", "medical"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Family",
+          "item": [
+            {
+              "name": "Get Family Members",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/patients/family",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["patients", "family"]
+                }
+              }
+            },
+            {
+              "name": "Add Family Member",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"fullName\": \"سارة أحمد\",\n    \"relationship\": \"SPOUSE\",\n    \"dateOfBirth\": \"1995-05-20\",\n    \"gender\": \"FEMALE\",\n    \"phoneNumber\": \"01098765432\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/patients/family",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["patients", "family"]
+                }
+              }
+            },
+            {
+              "name": "Remove Family Member",
+              "request": {
+                "method": "DELETE",
+                "url": {
+                  "raw": "{{baseUrl}}/patients/family/{{familyMemberId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["patients", "family", "{{familyMemberId}}"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Appointments",
+          "item": [
+            {
+              "name": "Get My Appointments",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const data = pm.response.json();",
+                      "    if (Array.isArray(data) && data.length > 0) {",
+                      "        pm.environment.set('appointmentId', data[0].id);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/patients/appointments?status={{appointmentStatus}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["patients", "appointments"],
+                  "query": [{ "key": "status", "value": "{{appointmentStatus}}", "disabled": true }]
+                }
+              }
+            },
+            {
+              "name": "Book Appointment",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      "const tomorrow = new Date();",
+                      "tomorrow.setDate(tomorrow.getDate() + 1);",
+                      "pm.environment.set('appointmentDate', tomorrow.toISOString().split('T')[0]);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200 || pm.response.code === 201) {",
+                      "    const data = pm.response.json();",
+                      "    pm.environment.set('appointmentId', data.id);",
+                      "    console.log('✅ Booked:', data.bookingNumber);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"clinicId\": \"{{clinicId}}\",\n    \"serviceTypeId\": \"{{serviceTypeId}}\",\n    \"appointmentDate\": \"{{appointmentDate}}\",\n    \"appointmentTime\": \"10:00\",\n    \"notes\": \"ملاحظات إضافية\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/patients/appointments",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["patients", "appointments"]
+                }
+              }
+            },
+            {
+              "name": "Get Appointment Details",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/patients/appointments/{{appointmentId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["patients", "appointments", "{{appointmentId}}"]
+                }
+              }
+            },
+            {
+              "name": "Cancel Appointment",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"reason\": \"ظروف طارئة\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/patients/appointments/{{appointmentId}}/cancel",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["patients", "appointments", "{{appointmentId}}", "cancel"]
+                }
+              }
+            },
+            {
+              "name": "Get Medical Notes",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/patients/appointments/{{appointmentId}}/medical-notes",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["patients", "appointments", "{{appointmentId}}", "medical-notes"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ratings",
+          "item": [
+            {
+              "name": "Rate Doctor",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"appointmentId\": \"{{appointmentId}}\",\n    \"rating\": 5,\n    \"comment\": \"طبيب ممتاز ومحترم جداً\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/patients/ratings",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["patients", "ratings"]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "👨‍⚕️ Doctor Portal",
+      "description": "Doctor role endpoints (Role: DOCTOR)",
+      "item": [
+        {
+          "name": "Profile",
+          "item": [
+            {
+              "name": "Get My Profile",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const data = pm.response.json();",
+                      "    pm.environment.set('doctorProfileId', data.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/profile/me",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "profile", "me"]
+                }
+              }
+            },
+            {
+              "name": "Create Profile",
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"specialtyId\": \"{{specialtyId}}\",\n    \"title\": \"استشاري\",\n    \"bio\": {\n        \"ar\": \"طبيب متخصص في طب الأسنان\",\n        \"en\": \"Specialized dentist\"\n    },\n    \"yearsOfExperience\": 10,\n    \"licenseNumber\": \"MED-12345\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/profile",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "profile"]
+                }
+              }
+            },
+            {
+              "name": "Update Profile",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"yearsOfExperience\": 12,\n    \"bio\": {\n        \"ar\": \"استشاري طب الأسنان التجميلي\",\n        \"en\": \"Cosmetic Dentistry Consultant\"\n    }\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/profile",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "profile"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Clinics",
+          "item": [
+            {
+              "name": "Get My Clinics",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const data = pm.response.json();",
+                      "    if (Array.isArray(data) && data.length > 0) {",
+                      "        pm.environment.set('clinicId', data[0].id);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/clinics",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "clinics"]
+                }
+              }
+            },
+            {
+              "name": "Create Clinic",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200 || pm.response.code === 201) {",
+                      "    const data = pm.response.json();",
+                      "    pm.environment.set('clinicId', data.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": {\n        \"ar\": \"عيادة النور\",\n        \"en\": \"Al-Noor Clinic\"\n    },\n    \"cityId\": \"{{cityId}}\",\n    \"address\": \"123 شارع الملك فيصل\",\n    \"phoneNumber\": \"0221234567\",\n    \"consultationFee\": 200\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/clinics",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "clinics"]
+                }
+              }
+            },
+            {
+              "name": "Get Clinic Details",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/clinics/{{clinicId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "clinics", "{{clinicId}}"]
+                }
+              }
+            },
+            {
+              "name": "Update Clinic",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"consultationFee\": 250,\n    \"address\": \"456 شارع الجمهورية\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/clinics/{{clinicId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "clinics", "{{clinicId}}"]
+                }
+              }
+            },
+            {
+              "name": "Toggle Clinic Active",
+              "request": {
+                "method": "PATCH",
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/clinics/{{clinicId}}/toggle-active",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "clinics", "{{clinicId}}", "toggle-active"]
+                }
+              }
+            },
+            {
+              "name": "Delete Clinic",
+              "request": {
+                "method": "DELETE",
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/clinics/{{clinicId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "clinics", "{{clinicId}}"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Schedules",
+          "item": [
+            {
+              "name": "Get Clinic Schedules",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/clinics/{{clinicId}}/schedules",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "clinics", "{{clinicId}}", "schedules"]
+                }
+              }
+            },
+            {
+              "name": "Create Schedule",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200 || pm.response.code === 201) {",
+                      "    const data = pm.response.json();",
+                      "    pm.environment.set('scheduleId', data.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"dayOfWeek\": \"SUNDAY\",\n    \"startTime\": \"09:00\",\n    \"endTime\": \"17:00\",\n    \"slotDuration\": 30,\n    \"maxPatients\": 20\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/clinics/{{clinicId}}/schedules",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "clinics", "{{clinicId}}", "schedules"]
+                }
+              }
+            },
+            {
+              "name": "Update Schedule",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"startTime\": \"10:00\",\n    \"endTime\": \"18:00\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/clinics/{{clinicId}}/schedules/{{scheduleId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "clinics", "{{clinicId}}", "schedules", "{{scheduleId}}"]
+                }
+              }
+            },
+            {
+              "name": "Delete Schedule",
+              "request": {
+                "method": "DELETE",
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/clinics/{{clinicId}}/schedules/{{scheduleId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "clinics", "{{clinicId}}", "schedules", "{{scheduleId}}"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Services",
+          "item": [
+            {
+              "name": "Get Clinic Services",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/clinics/{{clinicId}}/services",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "clinics", "{{clinicId}}", "services"]
+                }
+              }
+            },
+            {
+              "name": "Create Service",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200 || pm.response.code === 201) {",
+                      "    const data = pm.response.json();",
+                      "    pm.environment.set('serviceTypeId', data.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": {\n        \"ar\": \"كشف\",\n        \"en\": \"Consultation\"\n    },\n    \"description\": {\n        \"ar\": \"فحص طبي شامل\",\n        \"en\": \"Comprehensive medical examination\"\n    },\n    \"price\": 200,\n    \"duration\": 30\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/clinics/{{clinicId}}/services",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "clinics", "{{clinicId}}", "services"]
+                }
+              }
+            },
+            {
+              "name": "Get Service Details",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/clinics/{{clinicId}}/services/{{serviceTypeId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "clinics", "{{clinicId}}", "services", "{{serviceTypeId}}"]
+                }
+              }
+            },
+            {
+              "name": "Update Service",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"price\": 250\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/clinics/{{clinicId}}/services/{{serviceTypeId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "clinics", "{{clinicId}}", "services", "{{serviceTypeId}}"]
+                }
+              }
+            },
+            {
+              "name": "Toggle Service Active",
+              "request": {
+                "method": "PATCH",
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/clinics/{{clinicId}}/services/{{serviceTypeId}}/toggle-active",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "clinics", "{{clinicId}}", "services", "{{serviceTypeId}}", "toggle-active"]
+                }
+              }
+            },
+            {
+              "name": "Delete Service",
+              "request": {
+                "method": "DELETE",
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/clinics/{{clinicId}}/services/{{serviceTypeId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "clinics", "{{clinicId}}", "services", "{{serviceTypeId}}"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Appointments",
+          "item": [
+            {
+              "name": "Get My Appointments",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const data = pm.response.json();",
+                      "    if (Array.isArray(data) && data.length > 0) {",
+                      "        pm.environment.set('appointmentId', data[0].id);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/appointments?clinicId={{clinicId}}&date={{filterDate}}&status={{appointmentStatus}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "appointments"],
+                  "query": [
+                    { "key": "clinicId", "value": "{{clinicId}}", "disabled": true },
+                    { "key": "date", "value": "{{filterDate}}", "disabled": true },
+                    { "key": "status", "value": "{{appointmentStatus}}", "disabled": true }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Appointment Details",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/appointments/{{appointmentId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "appointments", "{{appointmentId}}"]
+                }
+              }
+            },
+            {
+              "name": "Confirm Appointment",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"status\": \"CONFIRMED\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/appointments/{{appointmentId}}/status",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "appointments", "{{appointmentId}}", "status"]
+                }
+              }
+            },
+            {
+              "name": "Check-in Patient",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"status\": \"CHECKED_IN\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/appointments/{{appointmentId}}/status",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "appointments", "{{appointmentId}}", "status"]
+                }
+              }
+            },
+            {
+              "name": "Complete Appointment",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"status\": \"COMPLETED\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/appointments/{{appointmentId}}/status",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "appointments", "{{appointmentId}}", "status"]
+                }
+              }
+            },
+            {
+              "name": "Mark No-Show",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"status\": \"NO_SHOW\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/appointments/{{appointmentId}}/status",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "appointments", "{{appointmentId}}", "status"]
+                }
+              }
+            },
+            {
+              "name": "Cancel Appointment",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"status\": \"CANCELLED\",\n    \"cancellationReason\": \"طوارئ طبية\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/appointments/{{appointmentId}}/status",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "appointments", "{{appointmentId}}", "status"]
+                }
+              }
+            },
+            {
+              "name": "Add Medical Notes",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"diagnosis\": \"التهاب اللثة\",\n    \"prescription\": \"Amoxicillin 500mg - 3 مرات يومياً لمدة أسبوع\",\n    \"notes\": \"المتابعة بعد أسبوع\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/appointments/{{appointmentId}}/medical-notes",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "appointments", "{{appointmentId}}", "medical-notes"]
+                }
+              }
+            },
+            {
+              "name": "Get Medical Notes",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/appointments/{{appointmentId}}/medical-notes",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "appointments", "{{appointmentId}}", "medical-notes"]
+                }
+              }
+            },
+            {
+              "name": "Update Payment (Cash)",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"paymentStatus\": \"PAID\",\n    \"paymentMethod\": \"CASH\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/appointments/{{appointmentId}}/payment",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "appointments", "{{appointmentId}}", "payment"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ratings",
+          "item": [
+            {
+              "name": "Get My Ratings",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/ratings",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "ratings"]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "📋 Secretary Portal",
+      "description": "Secretary role endpoints (Role: SECRETARY)",
+      "item": [
+        {
+          "name": "My Clinics",
+          "item": [
+            {
+              "name": "Get Assigned Clinics",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const clinics = pm.response.json();",
+                      "    if (Array.isArray(clinics) && clinics.length > 0) {",
+                      "        pm.environment.set('clinicId', clinics[0].id);",
+                      "        if (clinics[0].serviceTypes?.length > 0) {",
+                      "            pm.environment.set('serviceTypeId', clinics[0].serviceTypes[0].id);",
+                      "        }",
+                      "        console.log('✅ Found', clinics.length, 'clinic(s)');",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/secretary/appointments/clinics",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["secretary", "appointments", "clinics"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Appointments",
+          "item": [
+            {
+              "name": "Get All Appointments",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const data = pm.response.json();",
+                      "    if (Array.isArray(data) && data.length > 0) {",
+                      "        pm.environment.set('appointmentId', data[0].id);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/secretary/appointments",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["secretary", "appointments"]
+                }
+              }
+            },
+            {
+              "name": "Get Filtered Appointments",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      "pm.environment.set('filterDate', new Date().toISOString().split('T')[0]);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/secretary/appointments?clinicId={{clinicId}}&date={{filterDate}}&status=PENDING",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["secretary", "appointments"],
+                  "query": [
+                    { "key": "clinicId", "value": "{{clinicId}}" },
+                    { "key": "date", "value": "{{filterDate}}" },
+                    { "key": "status", "value": "PENDING" }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Appointment Details",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/secretary/appointments/{{appointmentId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["secretary", "appointments", "{{appointmentId}}"]
+                }
+              }
+            },
+            {
+              "name": "Book for Patient",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      "const tomorrow = new Date();",
+                      "tomorrow.setDate(tomorrow.getDate() + 1);",
+                      "pm.environment.set('appointmentDate', tomorrow.toISOString().split('T')[0]);"
+                    ],
+                    "type": "text/javascript"
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200 || pm.response.code === 201) {",
+                      "    const data = pm.response.json();",
+                      "    pm.environment.set('appointmentId', data.id);",
+                      "    console.log('✅ Booked:', data.bookingNumber);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"clinicId\": \"{{clinicId}}\",\n    \"serviceTypeId\": \"{{serviceTypeId}}\",\n    \"patientProfileId\": \"{{patientProfileId}}\",\n    \"appointmentDate\": \"{{appointmentDate}}\",\n    \"appointmentTime\": \"10:00\",\n    \"notes\": \"حجز بواسطة السكرتيرة\",\n    \"symptoms\": \"ألم في الأسنان\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/secretary/appointments",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["secretary", "appointments"]
+                }
+              }
+            },
+            {
+              "name": "Confirm Appointment",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"status\": \"CONFIRMED\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/secretary/appointments/{{appointmentId}}/status",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["secretary", "appointments", "{{appointmentId}}", "status"]
+                }
+              }
+            },
+            {
+              "name": "Check-in Patient",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"status\": \"CHECKED_IN\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/secretary/appointments/{{appointmentId}}/status",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["secretary", "appointments", "{{appointmentId}}", "status"]
+                }
+              }
+            },
+            {
+              "name": "Cancel Appointment",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"status\": \"CANCELLED\",\n    \"cancellationReason\": \"إلغاء بناءً على طلب المريض\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/secretary/appointments/{{appointmentId}}/status",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["secretary", "appointments", "{{appointmentId}}", "status"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Payments",
+          "item": [
+            {
+              "name": "Mark Paid (Cash)",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"paymentStatus\": \"PAID\",\n    \"paymentMethod\": \"CASH\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/secretary/appointments/{{appointmentId}}/payment",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["secretary", "appointments", "{{appointmentId}}", "payment"]
+                }
+              }
+            },
+            {
+              "name": "Mark Paid (Card)",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"paymentStatus\": \"PAID\",\n    \"paymentMethod\": \"CARD\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/secretary/appointments/{{appointmentId}}/payment",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["secretary", "appointments", "{{appointmentId}}", "payment"]
+                }
+              }
+            },
+            {
+              "name": "Mark Paid (Insurance)",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"paymentStatus\": \"PAID\",\n    \"paymentMethod\": \"INSURANCE\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/secretary/appointments/{{appointmentId}}/payment",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["secretary", "appointments", "{{appointmentId}}", "payment"]
+                }
+              }
+            },
+            {
+              "name": "Process Refund",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"paymentStatus\": \"REFUNDED\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/secretary/appointments/{{appointmentId}}/payment",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["secretary", "appointments", "{{appointmentId}}", "payment"]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "🔧 Admin Portal",
+      "description": "Admin role endpoints (Role: ADMIN)",
+      "item": [
+        {
+          "name": "Doctors Management",
+          "item": [
+            {
+              "name": "Get Pending Doctors",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    const data = pm.response.json();",
+                      "    if (Array.isArray(data) && data.length > 0) {",
+                      "        pm.environment.set('pendingDoctorId', data[0].id);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/admin/doctors/pending",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "doctors", "pending"]
+                }
+              }
+            },
+            {
+              "name": "Approve Doctor",
+              "request": {
+                "method": "PATCH",
+                "url": {
+                  "raw": "{{baseUrl}}/admin/doctors/{{pendingDoctorId}}/approve",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "doctors", "{{pendingDoctorId}}", "approve"]
+                }
+              }
+            },
+            {
+              "name": "Reject Doctor",
+              "request": {
+                "method": "PATCH",
+                "url": {
+                  "raw": "{{baseUrl}}/admin/doctors/{{pendingDoctorId}}/reject",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "doctors", "{{pendingDoctorId}}", "reject"]
+                }
+              }
+            },
+            {
+              "name": "Suspend Doctor",
+              "request": {
+                "method": "PATCH",
+                "url": {
+                  "raw": "{{baseUrl}}/admin/doctors/{{doctorProfileId}}/suspend",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "doctors", "{{doctorProfileId}}", "suspend"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Specialties",
+          "item": [
+            {
+              "name": "Create Specialty",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200 || pm.response.code === 201) {",
+                      "    const data = pm.response.json();",
+                      "    pm.environment.set('specialtyId', data.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": {\n        \"ar\": \"طب الأسنان\",\n        \"en\": \"Dentistry\"\n    },\n    \"description\": {\n        \"ar\": \"تخصص طب الأسنان\",\n        \"en\": \"Dental specialty\"\n    },\n    \"icon\": \"tooth\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/specialties",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["specialties"]
+                }
+              }
+            },
+            {
+              "name": "Update Specialty",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"icon\": \"dental-care\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/specialties/{{specialtyId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["specialties", "{{specialtyId}}"]
+                }
+              }
+            },
+            {
+              "name": "Delete Specialty",
+              "request": {
+                "method": "DELETE",
+                "url": {
+                  "raw": "{{baseUrl}}/specialties/{{specialtyId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["specialties", "{{specialtyId}}"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Locations",
+          "item": [
+            {
+              "name": "Create State",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200 || pm.response.code === 201) {",
+                      "    const data = pm.response.json();",
+                      "    pm.environment.set('stateId', data.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": {\n        \"ar\": \"القاهرة\",\n        \"en\": \"Cairo\"\n    }\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/states",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["states"]
+                }
+              }
+            },
+            {
+              "name": "Update State",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"isActive\": true\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/states/{{stateId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["states", "{{stateId}}"]
+                }
+              }
+            },
+            {
+              "name": "Delete State",
+              "request": {
+                "method": "DELETE",
+                "url": {
+                  "raw": "{{baseUrl}}/states/{{stateId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["states", "{{stateId}}"]
+                }
+              }
+            },
+            {
+              "name": "Create City",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200 || pm.response.code === 201) {",
+                      "    const data = pm.response.json();",
+                      "    pm.environment.set('cityId', data.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"stateId\": \"{{stateId}}\",\n    \"name\": {\n        \"ar\": \"مدينة نصر\",\n        \"en\": \"Nasr City\"\n    }\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/cities",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["cities"]
+                }
+              }
+            },
+            {
+              "name": "Update City",
+              "request": {
+                "method": "PATCH",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"isActive\": true\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/cities/{{cityId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["cities", "{{cityId}}"]
+                }
+              }
+            },
+            {
+              "name": "Delete City",
+              "request": {
+                "method": "DELETE",
+                "url": {
+                  "raw": "{{baseUrl}}/cities/{{cityId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["cities", "{{cityId}}"]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

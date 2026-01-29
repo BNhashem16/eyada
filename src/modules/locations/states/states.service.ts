@@ -23,10 +23,8 @@ export class StatesService {
 
     return this.prisma.state.create({
       data: {
+        ...createStateDto,
         name: createStateDto.name as any,
-        code: createStateDto.code,
-        isActive: createStateDto.isActive,
-        sortOrder: createStateDto.sortOrder,
       },
     });
   }
@@ -82,10 +80,8 @@ export class StatesService {
     return this.prisma.state.update({
       where: { id },
       data: {
+        ...updateStateDto,
         name: updateStateDto.name as any,
-        code: updateStateDto.code,
-        isActive: updateStateDto.isActive,
-        sortOrder: updateStateDto.sortOrder,
       },
     });
   }

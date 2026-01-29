@@ -26,14 +26,12 @@ export class ClinicsService {
 
     return this.prisma.clinic.create({
       data: {
-        doctorId: doctorProfile.id,
-        name: createDto.name,
-        address: createDto.address,
+        doctorProfileId: doctorProfile.id,
         cityId: createDto.cityId,
-        phoneNumber: createDto.phoneNumber,
+        name: createDto.name as any,
+        address: createDto.address as any,
         latitude: createDto.latitude,
         longitude: createDto.longitude,
-        slotDurationMinutes: createDto.slotDurationMinutes || 15,
         isActive: createDto.isActive ?? true,
       },
       include: {
@@ -58,7 +56,7 @@ export class ClinicsService {
     }
 
     return this.prisma.clinic.findMany({
-      where: { doctorId: doctorProfile.id },
+      where: { doctorProfileId: doctorProfile.id },
       include: {
         city: {
           include: {
@@ -76,7 +74,7 @@ export class ClinicsService {
     const clinic = await this.prisma.clinic.findUnique({
       where: { id },
       include: {
-        doctor: {
+        doctorProfile: {
           include: {
             user: {
               select: {
@@ -119,7 +117,14 @@ export class ClinicsService {
 
     return this.prisma.clinic.update({
       where: { id: clinic.id },
-      data: updateDto,
+      data: {
+        name: updateDto.name as any,
+        address: updateDto.address as any,
+        cityId: updateDto.cityId,
+        latitude: updateDto.latitude,
+        longitude: updateDto.longitude,
+        isActive: updateDto.isActive,
+      },
       include: {
         city: {
           include: {
@@ -139,7 +144,7 @@ export class ClinicsService {
     const futureAppointments = await this.prisma.appointment.count({
       where: {
         clinicId: clinic.id,
-        scheduledDate: { gte: new Date() },
+        appointmentDate: { gte: new Date() },
         status: { in: ['PENDING', 'CONFIRMED'] },
       },
     });
@@ -179,12 +184,12 @@ export class ClinicsService {
     }
 
     if (filters.specialtyId) {
-      where.doctor = {
+      where.doctorProfile = {
         specialtyId: filters.specialtyId,
         status: 'APPROVED',
       };
     } else {
-      where.doctor = {
+      where.doctorProfile = {
         status: 'APPROVED',
       };
     }
@@ -192,7 +197,7 @@ export class ClinicsService {
     return this.prisma.clinic.findMany({
       where,
       include: {
-        doctor: {
+        doctorProfile: {
           include: {
             user: {
               select: {
@@ -236,7 +241,7 @@ export class ClinicsService {
       throw new NotFoundException('Clinic not found');
     }
 
-    if (clinic.doctorId !== doctorProfile.id) {
+    if (clinic.doctorProfileId !== doctorProfile.id) {
       throw new ForbiddenException('You do not own this clinic');
     }
 

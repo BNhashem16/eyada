@@ -42,7 +42,17 @@ export class UpdateMedicalNotesDto {
   notes?: string;
 }
 
+enum PaymentMethod {
+  CASH = 'CASH',
+  CARD = 'CARD',
+  INSURANCE = 'INSURANCE',
+}
+
 export class UpdatePaymentStatusDto {
   @IsEnum(PaymentStatus)
   paymentStatus: PaymentStatus;
+
+  @IsOptional()
+  @IsEnum(PaymentMethod)
+  paymentMethod?: PaymentMethod;
 }

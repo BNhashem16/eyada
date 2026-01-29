@@ -39,8 +39,11 @@ export class PatientsService {
 
     return this.prisma.patientProfile.create({
       data: {
-        userId,
         ...createDto,
+        userId,
+        dateOfBirth: createDto.dateOfBirth
+          ? new Date(createDto.dateOfBirth)
+          : undefined,
         relationshipToHead: RelationshipType.SELF,
       },
     });
@@ -102,7 +105,12 @@ export class PatientsService {
 
     return this.prisma.patientProfile.update({
       where: { userId },
-      data: updateDto,
+      data: {
+        ...updateDto,
+        dateOfBirth: updateDto.dateOfBirth
+          ? new Date(updateDto.dateOfBirth)
+          : undefined,
+      },
     });
   }
 
@@ -202,10 +210,10 @@ export class PatientsService {
           ? new Date(addFamilyMemberDto.dateOfBirth)
           : null,
         age: addFamilyMemberDto.age,
-        gender: addFamilyMemberDto.gender as any,
+        gender: addFamilyMemberDto.gender,
         bloodType: addFamilyMemberDto.bloodType,
         familyHeadId: headProfile.id,
-        relationshipToHead: addFamilyMemberDto.relationship as RelationshipType,
+        relationshipToHead: addFamilyMemberDto.relationship,
       },
       include: {
         user: {
