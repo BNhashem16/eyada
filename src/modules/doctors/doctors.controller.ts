@@ -31,14 +31,7 @@ export class DoctorsController {
     return this.doctorsService.findAll(searchDto);
   }
 
-  // Public - get doctor by ID
-  @Public()
-  @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.doctorsService.findById(id);
-  }
-
-  // Doctor - get own profile
+  // Doctor - get own profile (must be before :id route)
   @Get('profile/me')
   @UseGuards(RolesGuard)
   @Roles(Role.DOCTOR)
@@ -66,6 +59,13 @@ export class DoctorsController {
     @Body() updateDto: UpdateDoctorProfileDto,
   ) {
     return this.doctorsService.updateProfile(user.id, updateDto);
+  }
+
+  // Public - get doctor by ID (must be last - catches all other patterns)
+  @Public()
+  @Get(':id')
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.doctorsService.findById(id);
   }
 }
 

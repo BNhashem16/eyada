@@ -2,6 +2,8 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma';
 import { CreateClinicDto, UpdateClinicDto } from './dto';
@@ -21,7 +23,14 @@ export class ClinicsService {
     });
 
     if (!doctorProfile) {
-      throw new NotFoundException('Doctor profile not found');
+      throw new HttpException(
+        {
+          message: 'Please complete your doctor profile first before managing clinics',
+          error: 'Profile Incomplete',
+          errorCode: 'DOCTOR_PROFILE_INCOMPLETE',
+        },
+        HttpStatus.FORBIDDEN,
+      );
     }
 
     return this.prisma.clinic.create({
@@ -52,7 +61,14 @@ export class ClinicsService {
     });
 
     if (!doctorProfile) {
-      throw new NotFoundException('Doctor profile not found');
+      throw new HttpException(
+        {
+          message: 'Please complete your doctor profile first before managing clinics',
+          error: 'Profile Incomplete',
+          errorCode: 'DOCTOR_PROFILE_INCOMPLETE',
+        },
+        HttpStatus.FORBIDDEN,
+      );
     }
 
     return this.prisma.clinic.findMany({
@@ -230,7 +246,14 @@ export class ClinicsService {
     });
 
     if (!doctorProfile) {
-      throw new NotFoundException('Doctor profile not found');
+      throw new HttpException(
+        {
+          message: 'Please complete your doctor profile first before managing clinics',
+          error: 'Profile Incomplete',
+          errorCode: 'DOCTOR_PROFILE_INCOMPLETE',
+        },
+        HttpStatus.FORBIDDEN,
+      );
     }
 
     const clinic = await this.prisma.clinic.findUnique({

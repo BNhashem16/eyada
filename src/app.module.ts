@@ -61,17 +61,19 @@ import { NotificationsModule } from './modules/notifications';
     // Phase 3: Lookup Data & Profiles
     SpecialtiesModule,
     LocationsModule,
-    DoctorsModule,
     PatientsModule,
 
     // Phase 4: Clinics & Appointments
-    ClinicsModule,
-    SchedulesModule,
-    ServicesModule,
-    AppointmentsModule,
+    // IMPORTANT: All modules with /doctors/* routes must come BEFORE DoctorsModule
+    // because DoctorsModule has /doctors/:id which catches everything
+    ClinicsModule,        // /doctors/clinics
+    SchedulesModule,      // /doctors/clinics/:clinicId/schedules
+    ServicesModule,       // /doctors/clinics/:clinicId/services
+    AppointmentsModule,   // /doctors/appointments
+    RatingsModule,        // /doctors/ratings
+    DoctorsModule,        // /doctors/:id (must be last)
 
-    // Phase 5: Ratings & Notifications
-    RatingsModule,
+    // Phase 5: Notifications
     NotificationsModule,
   ],
   controllers: [AppController],
