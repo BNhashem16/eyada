@@ -1,0 +1,1498 @@
+{
+  "info": {
+    "name": "Eyada API - Part 2: Doctors, Patients, Clinics",
+    "_postman_id": "eyada-part2-v1",
+    "description": "Doctors, Patients, and Clinics endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key": "baseUrl", "value": "http://localhost:3000"},
+    {"key": "accessToken", "value": ""},
+    {"key": "doctorId", "value": ""},
+    {"key": "patientId", "value": ""},
+    {"key": "clinicId", "value": ""},
+    {"key": "specialtyId", "value": ""},
+    {"key": "cityId", "value": ""},
+    {"key": "serviceId", "value": ""},
+    {"key": "scheduleId", "value": ""},
+    {"key": "familyMemberId", "value": ""}
+  ],
+  "item": [
+    {
+      "name": "Doctors",
+      "item": [
+        {
+          "name": "Public",
+          "item": [
+            {
+              "name": "Search Doctors",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    var jsonData = pm.response.json();",
+                      "    if (jsonData.data && jsonData.data.length > 0) {",
+                      "        pm.collectionVariables.set('doctorId', jsonData.data[0].id);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/doctors?page=1&limit=10",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors"],
+                  "query": [
+                    {"key": "page", "value": "1"},
+                    {"key": "limit", "value": "10"},
+                    {"key": "specialtyId", "value": "{{specialtyId}}", "disabled": true},
+                    {"key": "cityId", "value": "{{cityId}}", "disabled": true},
+                    {"key": "search", "value": "محمد", "disabled": true},
+                    {"key": "minRating", "value": "4", "disabled": true},
+                    {"key": "priceMin", "value": "100", "disabled": true},
+                    {"key": "priceMax", "value": "500", "disabled": true}
+                  ]
+                },
+                "description": "Search and list all approved doctors with filters"
+              },
+              "response": [
+                {
+                  "name": "Success - List All",
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"data\": [\n    {\n      \"id\": \"550e8400-e29b-41d4-a716-446655440100\",\n      \"user\": {\n        \"fullName\": \"Dr. Mohamed Ali\",\n        \"phoneNumber\": \"01112345678\"\n      },\n      \"specialty\": {\n        \"name\": {\"ar\": \"طب عام\", \"en\": \"General Medicine\"}\n      },\n      \"yearsOfExperience\": 10,\n      \"rating\": 4.5,\n      \"reviewCount\": 25\n    }\n  ],\n  \"meta\": {\n    \"page\": 1,\n    \"limit\": 10,\n    \"total\": 50,\n    \"totalPages\": 5\n  }\n}"
+                },
+                {
+                  "name": "Success - With Filters",
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"data\": [\n    {\n      \"id\": \"550e8400-e29b-41d4-a716-446655440100\",\n      \"user\": {\n        \"fullName\": \"Dr. Ahmed Hassan\"\n      },\n      \"specialty\": {\n        \"name\": {\"ar\": \"طب القلب\", \"en\": \"Cardiology\"}\n      },\n      \"rating\": 4.8\n    }\n  ],\n  \"meta\": {\n    \"page\": 1,\n    \"limit\": 10,\n    \"total\": 5,\n    \"totalPages\": 1\n  }\n}"
+                }
+              ]
+            },
+            {
+              "name": "Get Doctor by ID",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/{{doctorId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "{{doctorId}}"]
+                },
+                "description": "Get public doctor profile by ID"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440100\",\n  \"user\": {\n    \"fullName\": \"Dr. Mohamed Ali\",\n    \"phoneNumber\": \"01112345678\"\n  },\n  \"specialty\": {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440010\",\n    \"name\": {\"ar\": \"طب عام\", \"en\": \"General Medicine\"}\n  },\n  \"licenseNumber\": \"MED-12345\",\n  \"yearsOfExperience\": 10,\n  \"qualifications\": {\n    \"ar\": \"بكالوريوس طب - جامعة القاهرة\",\n    \"en\": \"MBBS - Cairo University\"\n  },\n  \"bio\": {\n    \"ar\": \"طبيب متخصص في الطب العام\",\n    \"en\": \"Specialized general medicine doctor\"\n  },\n  \"profileImage\": \"https://example.com/doctor.jpg\",\n  \"rating\": 4.5,\n  \"reviewCount\": 25,\n  \"clinics\": [\n    {\n      \"id\": \"550e8400-e29b-41d4-a716-446655440200\",\n      \"name\": {\"ar\": \"عيادة النور\", \"en\": \"Al-Nour Clinic\"}\n    }\n  ]\n}"
+                },
+                {
+                  "name": "Error - Not Found",
+                  "status": "Not Found",
+                  "code": 404,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"statusCode\": 404,\n  \"message\": \"Doctor not found\",\n  \"error\": \"Not Found\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Get Doctor Ratings",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/{{doctorId}}/ratings?limit=10&offset=0",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "{{doctorId}}", "ratings"],
+                  "query": [
+                    {"key": "limit", "value": "10"},
+                    {"key": "offset", "value": "0"}
+                  ]
+                },
+                "description": "Get doctor's ratings and reviews"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"data\": [\n    {\n      \"id\": \"550e8400-e29b-41d4-a716-446655440300\",\n      \"rating\": 5,\n      \"review\": \"دكتور ممتاز وشرح كل حاجة بالتفصيل\",\n      \"patient\": {\n        \"fullName\": \"Ahmed M.\"\n      },\n      \"createdAt\": \"2024-01-15T10:30:00.000Z\"\n    }\n  ],\n  \"meta\": {\n    \"total\": 25,\n    \"averageRating\": 4.5\n  }\n}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Doctor Profile (Auth)",
+          "item": [
+            {
+              "name": "Get My Profile",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/profile/me",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "profile", "me"]
+                },
+                "description": "Get current doctor's own profile (Doctor role required)"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440100\",\n  \"userId\": \"550e8400-e29b-41d4-a716-446655440001\",\n  \"specialtyId\": \"550e8400-e29b-41d4-a716-446655440010\",\n  \"licenseNumber\": \"MED-12345\",\n  \"yearsOfExperience\": 10,\n  \"qualifications\": {\n    \"ar\": \"بكالوريوس طب\",\n    \"en\": \"MBBS\"\n  },\n  \"bio\": {\n    \"ar\": \"طبيب متخصص\",\n    \"en\": \"Specialized doctor\"\n  },\n  \"approvalStatus\": \"APPROVED\",\n  \"showPhoneNumber\": true,\n  \"showWhatsappNumber\": true,\n  \"whatsappNumbers\": [\"01112345678\"]\n}"
+                },
+                {
+                  "name": "Error - Profile Not Created",
+                  "status": "Not Found",
+                  "code": 404,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"statusCode\": 404,\n  \"message\": \"Doctor profile not found. Please create one first.\",\n  \"error\": \"Not Found\"\n}"
+                },
+                {
+                  "name": "Error - Not Doctor Role",
+                  "status": "Forbidden",
+                  "code": 403,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"statusCode\": 403,\n  \"message\": \"Forbidden resource\",\n  \"error\": \"Forbidden\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Create Doctor Profile",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+                  {"key": "Content-Type", "value": "application/json"}
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"specialtyId\": \"{{specialtyId}}\",\n  \"licenseNumber\": \"MED-12345\",\n  \"yearsOfExperience\": 10,\n  \"qualifications\": {\n    \"ar\": \"بكالوريوس طب وجراحة - جامعة القاهرة\",\n    \"en\": \"MBBS - Cairo University\"\n  },\n  \"bio\": {\n    \"ar\": \"طبيب متخصص في الطب العام مع خبرة 10 سنوات\",\n    \"en\": \"Specialized general medicine doctor with 10 years experience\"\n  },\n  \"profileImage\": \"https://example.com/doctor-photo.jpg\",\n  \"showPhoneNumber\": true,\n  \"showWhatsappNumber\": true,\n  \"whatsappNumbers\": [\"01112345678\"]\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/profile",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "profile"]
+                },
+                "description": "Create doctor profile (Doctor role required, pending admin approval)"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Created",
+                  "code": 201,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440100\",\n  \"specialtyId\": \"550e8400-e29b-41d4-a716-446655440010\",\n  \"licenseNumber\": \"MED-12345\",\n  \"yearsOfExperience\": 10,\n  \"approvalStatus\": \"PENDING\",\n  \"message\": \"Profile created. Pending admin approval.\"\n}"
+                },
+                {
+                  "name": "Error - Profile Already Exists",
+                  "status": "Conflict",
+                  "code": 409,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"statusCode\": 409,\n  \"message\": \"Doctor profile already exists\",\n  \"error\": \"Conflict\"\n}"
+                },
+                {
+                  "name": "Error - Invalid Specialty",
+                  "status": "Not Found",
+                  "code": 404,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"statusCode\": 404,\n  \"message\": \"Specialty not found\",\n  \"error\": \"Not Found\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update Doctor Profile",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+                  {"key": "Content-Type", "value": "application/json"}
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"yearsOfExperience\": 12,\n  \"bio\": {\n    \"ar\": \"طبيب متخصص مع خبرة 12 سنة\",\n    \"en\": \"Specialized doctor with 12 years experience\"\n  },\n  \"showPhoneNumber\": false\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/profile",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "profile"]
+                },
+                "description": "Update doctor's own profile"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440100\",\n  \"yearsOfExperience\": 12,\n  \"bio\": {\n    \"ar\": \"طبيب متخصص مع خبرة 12 سنة\",\n    \"en\": \"Specialized doctor with 12 years experience\"\n  },\n  \"showPhoneNumber\": false,\n  \"updatedAt\": \"2024-01-15T11:00:00.000Z\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Get My Ratings",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/ratings",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "ratings"]
+                },
+                "description": "Get all ratings received by current doctor"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "[\n  {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440300\",\n    \"rating\": 5,\n    \"review\": \"Excellent doctor\",\n    \"appointment\": {\n      \"appointmentDate\": \"2024-01-10\"\n    },\n    \"createdAt\": \"2024-01-15T10:30:00.000Z\"\n  }\n]"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Admin Doctor Management",
+          "item": [
+            {
+              "name": "Get Pending Doctors",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/doctors/pending",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "doctors", "pending"]
+                },
+                "description": "Get all doctors pending approval (Admin only)"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "[\n  {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440101\",\n    \"user\": {\n      \"fullName\": \"Dr. New Doctor\",\n      \"email\": \"newdoctor@example.com\"\n    },\n    \"specialty\": {\n      \"name\": {\"ar\": \"طب عام\", \"en\": \"General Medicine\"}\n    },\n    \"licenseNumber\": \"MED-99999\",\n    \"approvalStatus\": \"PENDING\",\n    \"createdAt\": \"2024-01-15T10:30:00.000Z\"\n  }\n]"
+                },
+                {
+                  "name": "Error - Forbidden",
+                  "status": "Forbidden",
+                  "code": 403,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"statusCode\": 403,\n  \"message\": \"Forbidden resource\",\n  \"error\": \"Forbidden\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Approve Doctor",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/doctors/{{doctorId}}/approve",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "doctors", "{{doctorId}}", "approve"]
+                },
+                "description": "Approve a pending doctor (Admin only)"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440101\",\n  \"approvalStatus\": \"APPROVED\",\n  \"message\": \"Doctor approved successfully\"\n}"
+                },
+                {
+                  "name": "Error - Already Approved",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"statusCode\": 400,\n  \"message\": \"Doctor is already approved\",\n  \"error\": \"Bad Request\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Reject Doctor",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/doctors/{{doctorId}}/reject",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "doctors", "{{doctorId}}", "reject"]
+                },
+                "description": "Reject a pending doctor (Admin only)"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440101\",\n  \"approvalStatus\": \"REJECTED\",\n  \"message\": \"Doctor rejected\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Suspend Doctor",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/doctors/{{doctorId}}/suspend",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["admin", "doctors", "{{doctorId}}", "suspend"]
+                },
+                "description": "Suspend an approved doctor (Admin only)"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440100\",\n  \"approvalStatus\": \"SUSPENDED\",\n  \"message\": \"Doctor suspended\"\n}"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Patients",
+      "item": [
+        {
+          "name": "Profile",
+          "item": [
+            {
+              "name": "Get My Profile",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/patients/profile",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["patients", "profile"]
+                },
+                "description": "Get current patient's profile (Patient role required)"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440400\",\n  \"userId\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"dateOfBirth\": \"1990-01-15\",\n  \"age\": 34,\n  \"gender\": \"MALE\",\n  \"bloodType\": \"O+\",\n  \"whatsappNumber\": \"01012345678\",\n  \"usePhoneAsWhatsapp\": true\n}"
+                },
+                {
+                  "name": "Error - Profile Not Found",
+                  "status": "Not Found",
+                  "code": 404,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"statusCode\": 404,\n  \"message\": \"Patient profile not found\",\n  \"error\": \"Not Found\"\n}"
+                },
+                {
+                  "name": "Error - Forbidden",
+                  "status": "Forbidden",
+                  "code": 403,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"statusCode\": 403,\n  \"message\": \"Forbidden resource\",\n  \"error\": \"Forbidden\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Create Patient Profile",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+                  {"key": "Content-Type", "value": "application/json"}
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"dateOfBirth\": \"1990-01-15\",\n  \"gender\": \"MALE\",\n  \"bloodType\": \"O+\",\n  \"whatsappNumber\": \"01012345678\",\n  \"usePhoneAsWhatsapp\": true\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/patients/profile",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["patients", "profile"]
+                },
+                "description": "Create patient profile"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Created",
+                  "code": 201,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440400\",\n  \"dateOfBirth\": \"1990-01-15\",\n  \"age\": 34,\n  \"gender\": \"MALE\",\n  \"bloodType\": \"O+\",\n  \"createdAt\": \"2024-01-15T10:30:00.000Z\"\n}"
+                },
+                {
+                  "name": "Error - Profile Exists",
+                  "status": "Conflict",
+                  "code": 409,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"statusCode\": 409,\n  \"message\": \"Patient profile already exists\",\n  \"error\": \"Conflict\"\n}"
+                },
+                {
+                  "name": "Error - Invalid Gender",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"statusCode\": 400,\n  \"message\": [\"gender must be one of: MALE, FEMALE\"],\n  \"error\": \"Bad Request\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update Patient Profile",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+                  {"key": "Content-Type", "value": "application/json"}
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"bloodType\": \"A+\",\n  \"whatsappNumber\": \"01098765432\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/patients/profile",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["patients", "profile"]
+                },
+                "description": "Update patient profile"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440400\",\n  \"bloodType\": \"A+\",\n  \"whatsappNumber\": \"01098765432\",\n  \"updatedAt\": \"2024-01-15T11:00:00.000Z\"\n}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Medical Data",
+          "item": [
+            {
+              "name": "Get Medical Data",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/patients/profile/medical",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["patients", "profile", "medical"]
+                },
+                "description": "Get encrypted medical data (chronic diseases, allergies)"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"chronicDiseases\": [\"Diabetes\", \"Hypertension\"],\n  \"allergies\": [\"Penicillin\", \"Peanuts\"]\n}"
+                },
+                {
+                  "name": "Success - Empty",
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"chronicDiseases\": [],\n  \"allergies\": []\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update Medical Data",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+                  {"key": "Content-Type", "value": "application/json"}
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"chronicDiseases\": [\"Diabetes\", \"Hypertension\"],\n  \"allergies\": [\"Penicillin\"]\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/patients/profile/medical",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["patients", "profile", "medical"]
+                },
+                "description": "Update encrypted medical data"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"chronicDiseases\": [\"Diabetes\", \"Hypertension\"],\n  \"allergies\": [\"Penicillin\"],\n  \"message\": \"Medical data updated successfully\"\n}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Family Members",
+          "item": [
+            {
+              "name": "Get Family Members",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    var jsonData = pm.response.json();",
+                      "    if (jsonData.length > 0) {",
+                      "        pm.collectionVariables.set('familyMemberId', jsonData[0].id);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/patients/family",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["patients", "family"]
+                },
+                "description": "Get all family members"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "[\n  {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440410\",\n    \"fullName\": \"Sara Ahmed\",\n    \"dateOfBirth\": \"2015-05-20\",\n    \"age\": 8,\n    \"gender\": \"FEMALE\",\n    \"relationship\": \"CHILD\",\n    \"bloodType\": \"O+\"\n  },\n  {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440411\",\n    \"fullName\": \"Fatima Mohamed\",\n    \"dateOfBirth\": \"1992-03-10\",\n    \"age\": 32,\n    \"gender\": \"FEMALE\",\n    \"relationship\": \"SPOUSE\"\n  }\n]"
+                },
+                {
+                  "name": "Success - Empty",
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "[]"
+                }
+              ]
+            },
+            {
+              "name": "Add Family Member",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    var jsonData = pm.response.json();",
+                      "    pm.collectionVariables.set('familyMemberId', jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+                  {"key": "Content-Type", "value": "application/json"}
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"fullName\": \"Sara Ahmed\",\n  \"dateOfBirth\": \"2015-05-20\",\n  \"gender\": \"FEMALE\",\n  \"relationship\": \"CHILD\",\n  \"bloodType\": \"O+\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/patients/family",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["patients", "family"]
+                },
+                "description": "Add a family member for booking appointments"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Created",
+                  "code": 201,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440410\",\n  \"fullName\": \"Sara Ahmed\",\n  \"dateOfBirth\": \"2015-05-20\",\n  \"age\": 8,\n  \"gender\": \"FEMALE\",\n  \"relationship\": \"CHILD\",\n  \"bloodType\": \"O+\",\n  \"createdAt\": \"2024-01-15T10:30:00.000Z\"\n}"
+                },
+                {
+                  "name": "Error - Invalid Relationship",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"statusCode\": 400,\n  \"message\": [\"relationship must be one of: SPOUSE, CHILD, PARENT, SIBLING, OTHER\"],\n  \"error\": \"Bad Request\"\n}"
+                },
+                {
+                  "name": "Error - Name Too Short",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"statusCode\": 400,\n  \"message\": [\"fullName must be longer than or equal to 2 characters\"],\n  \"error\": \"Bad Request\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Remove Family Member",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/patients/family/{{familyMemberId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["patients", "family", "{{familyMemberId}}"]
+                },
+                "description": "Remove a family member"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"message\": \"Family member removed successfully\"\n}"
+                },
+                {
+                  "name": "Error - Not Found",
+                  "status": "Not Found",
+                  "code": 404,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"statusCode\": 404,\n  \"message\": \"Family member not found\",\n  \"error\": \"Not Found\"\n}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Ratings",
+          "item": [
+            {
+              "name": "Create Rating",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+                  {"key": "Content-Type", "value": "application/json"}
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"appointmentId\": \"{{appointmentId}}\",\n  \"rating\": 5,\n  \"review\": \"دكتور ممتاز جداً، شرح كل حاجة بالتفصيل وكان متعاون جداً\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/patients/ratings",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["patients", "ratings"]
+                },
+                "description": "Rate a completed appointment (Patient only)"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Created",
+                  "code": 201,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440300\",\n  \"appointmentId\": \"550e8400-e29b-41d4-a716-446655440500\",\n  \"rating\": 5,\n  \"review\": \"دكتور ممتاز جداً\",\n  \"createdAt\": \"2024-01-15T10:30:00.000Z\"\n}"
+                },
+                {
+                  "name": "Error - Already Rated",
+                  "status": "Conflict",
+                  "code": 409,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"statusCode\": 409,\n  \"message\": \"You have already rated this appointment\",\n  \"error\": \"Conflict\"\n}"
+                },
+                {
+                  "name": "Error - Appointment Not Completed",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"statusCode\": 400,\n  \"message\": \"Can only rate completed appointments\",\n  \"error\": \"Bad Request\"\n}"
+                },
+                {
+                  "name": "Error - Invalid Rating",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"statusCode\": 400,\n  \"message\": [\"rating must be between 1 and 5\"],\n  \"error\": \"Bad Request\"\n}"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Clinics",
+      "item": [
+        {
+          "name": "Public",
+          "item": [
+            {
+              "name": "Search Clinics",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    var jsonData = pm.response.json();",
+                      "    if (jsonData.length > 0) {",
+                      "        pm.collectionVariables.set('clinicId', jsonData[0].id);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/clinics",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["clinics"],
+                  "query": [
+                    {"key": "cityId", "value": "{{cityId}}", "disabled": true},
+                    {"key": "specialtyId", "value": "{{specialtyId}}", "disabled": true}
+                  ]
+                },
+                "description": "Search and list all active clinics"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "[\n  {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440200\",\n    \"name\": {\n      \"ar\": \"عيادة النور\",\n      \"en\": \"Al-Nour Clinic\"\n    },\n    \"address\": {\n      \"ar\": \"شارع التحرير، مدينة نصر\",\n      \"en\": \"Tahrir Street, Nasr City\"\n    },\n    \"city\": {\n      \"name\": {\"ar\": \"مدينة نصر\", \"en\": \"Nasr City\"}\n    },\n    \"doctor\": {\n      \"user\": {\"fullName\": \"Dr. Mohamed Ali\"},\n      \"specialty\": {\"name\": {\"ar\": \"طب عام\", \"en\": \"General Medicine\"}}\n    },\n    \"phoneNumber\": \"01112345678\",\n    \"latitude\": 30.0626,\n    \"longitude\": 31.3456\n  }\n]"
+                }
+              ]
+            },
+            {
+              "name": "Get Clinic Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/clinics/{{clinicId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["clinics", "{{clinicId}}"]
+                },
+                "description": "Get full clinic details including schedules and services"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440200\",\n  \"name\": {\"ar\": \"عيادة النور\", \"en\": \"Al-Nour Clinic\"},\n  \"address\": {\"ar\": \"شارع التحرير\", \"en\": \"Tahrir Street\"},\n  \"phoneNumber\": \"01112345678\",\n  \"slotDurationMinutes\": 30,\n  \"doctor\": {\n    \"user\": {\"fullName\": \"Dr. Mohamed Ali\"},\n    \"specialty\": {\"name\": {\"ar\": \"طب عام\", \"en\": \"General Medicine\"}},\n    \"rating\": 4.5\n  },\n  \"schedules\": [\n    {\n      \"dayOfWeek\": \"SUNDAY\",\n      \"shifts\": [{\"startTime\": \"09:00\", \"endTime\": \"14:00\"}]\n    }\n  ],\n  \"services\": [\n    {\n      \"serviceType\": \"FIRST_VISIT\",\n      \"name\": {\"ar\": \"كشف أول\", \"en\": \"First Visit\"},\n      \"price\": 300\n    }\n  ]\n}"
+                },
+                {
+                  "name": "Error - Not Found",
+                  "status": "Not Found",
+                  "code": 404,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"statusCode\": 404,\n  \"message\": \"Clinic not found\",\n  \"error\": \"Not Found\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Get Clinic Schedules",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/clinics/{{clinicId}}/schedules",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["clinics", "{{clinicId}}", "schedules"]
+                },
+                "description": "Get clinic weekly schedules"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "[\n  {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440220\",\n    \"dayOfWeek\": \"SUNDAY\",\n    \"shifts\": [\n      {\"startTime\": \"09:00\", \"endTime\": \"14:00\", \"breakTime\": \"12:00\"}\n    ],\n    \"slotDuration\": 30,\n    \"isActive\": true\n  },\n  {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440221\",\n    \"dayOfWeek\": \"TUESDAY\",\n    \"shifts\": [\n      {\"startTime\": \"16:00\", \"endTime\": \"21:00\"}\n    ],\n    \"slotDuration\": 30,\n    \"isActive\": true\n  }\n]"
+                }
+              ]
+            },
+            {
+              "name": "Get Available Slots",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/clinics/{{clinicId}}/available-slots?date=2024-01-20",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["clinics", "{{clinicId}}", "available-slots"],
+                  "query": [
+                    {"key": "date", "value": "2024-01-20"}
+                  ]
+                },
+                "description": "Get available time slots for a specific date"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"date\": \"2024-01-20\",\n  \"slots\": [\n    {\"time\": \"09:00\", \"available\": true},\n    {\"time\": \"09:30\", \"available\": true},\n    {\"time\": \"10:00\", \"available\": false},\n    {\"time\": \"10:30\", \"available\": true},\n    {\"time\": \"11:00\", \"available\": true},\n    {\"time\": \"11:30\", \"available\": true},\n    {\"time\": \"13:00\", \"available\": true},\n    {\"time\": \"13:30\", \"available\": true}\n  ]\n}"
+                },
+                {
+                  "name": "Success - No Slots (Clinic Closed)",
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"date\": \"2024-01-19\",\n  \"slots\": [],\n  \"message\": \"Clinic is closed on this day\"\n}"
+                },
+                {
+                  "name": "Error - Invalid Date",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"statusCode\": 400,\n  \"message\": [\"date must be a valid date in YYYY-MM-DD format\"],\n  \"error\": \"Bad Request\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Get Clinic Services",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/clinics/{{clinicId}}/services",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["clinics", "{{clinicId}}", "services"]
+                },
+                "description": "Get clinic service types and prices"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "[\n  {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440230\",\n    \"serviceType\": \"FIRST_VISIT\",\n    \"name\": {\"ar\": \"كشف أول\", \"en\": \"First Visit\"},\n    \"price\": 300,\n    \"duration\": 30,\n    \"isActive\": true\n  },\n  {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440231\",\n    \"serviceType\": \"RE_VISIT\",\n    \"name\": {\"ar\": \"إعادة كشف\", \"en\": \"Re-visit\"},\n    \"price\": 150,\n    \"duration\": 15,\n    \"reVisitValidityDays\": 14,\n    \"isActive\": true\n  },\n  {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440232\",\n    \"serviceType\": \"CONSULTATION_PHONE\",\n    \"name\": {\"ar\": \"استشارة هاتفية\", \"en\": \"Phone Consultation\"},\n    \"price\": 100,\n    \"duration\": 15,\n    \"isActive\": true\n  }\n]"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Doctor Clinics (Auth)",
+          "item": [
+            {
+              "name": "Get My Clinics",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    var jsonData = pm.response.json();",
+                      "    if (jsonData.length > 0) {",
+                      "        pm.collectionVariables.set('clinicId', jsonData[0].id);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/clinics",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "clinics"]
+                },
+                "description": "Get all clinics owned by current doctor"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "[\n  {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440200\",\n    \"name\": {\"ar\": \"عيادة النور\", \"en\": \"Al-Nour Clinic\"},\n    \"address\": {\"ar\": \"شارع التحرير\", \"en\": \"Tahrir Street\"},\n    \"isActive\": true,\n    \"appointmentCount\": 45\n  }\n]"
+                }
+              ]
+            },
+            {
+              "name": "Create Clinic",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    var jsonData = pm.response.json();",
+                      "    pm.collectionVariables.set('clinicId', jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+                  {"key": "Content-Type", "value": "application/json"}
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": {\n    \"ar\": \"عيادة النور\",\n    \"en\": \"Al-Nour Clinic\"\n  },\n  \"address\": {\n    \"ar\": \"123 شارع التحرير، مدينة نصر\",\n    \"en\": \"123 Tahrir Street, Nasr City\"\n  },\n  \"cityId\": \"{{cityId}}\",\n  \"phoneNumber\": \"01112345678\",\n  \"latitude\": 30.0626,\n  \"longitude\": 31.3456,\n  \"slotDurationMinutes\": 30,\n  \"isActive\": true\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/clinics",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "clinics"]
+                },
+                "description": "Create a new clinic (Doctor only)"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Created",
+                  "code": 201,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440200\",\n  \"name\": {\"ar\": \"عيادة النور\", \"en\": \"Al-Nour Clinic\"},\n  \"address\": {\"ar\": \"123 شارع التحرير\", \"en\": \"123 Tahrir Street\"},\n  \"cityId\": \"550e8400-e29b-41d4-a716-446655440030\",\n  \"phoneNumber\": \"01112345678\",\n  \"slotDurationMinutes\": 30,\n  \"isActive\": true,\n  \"createdAt\": \"2024-01-15T10:30:00.000Z\"\n}"
+                },
+                {
+                  "name": "Error - City Not Found",
+                  "status": "Not Found",
+                  "code": 404,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"statusCode\": 404,\n  \"message\": \"City not found\",\n  \"error\": \"Not Found\"\n}"
+                },
+                {
+                  "name": "Error - Invalid Coordinates",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"statusCode\": 400,\n  \"message\": [\"latitude must be between -90 and 90\"],\n  \"error\": \"Bad Request\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Get My Clinic Details",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/clinics/{{clinicId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "clinics", "{{clinicId}}"]
+                },
+                "description": "Get detailed info about own clinic"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440200\",\n  \"name\": {\"ar\": \"عيادة النور\", \"en\": \"Al-Nour Clinic\"},\n  \"schedules\": [],\n  \"services\": [],\n  \"statistics\": {\n    \"totalAppointments\": 150,\n    \"completedAppointments\": 120,\n    \"cancelledAppointments\": 10,\n    \"revenue\": 45000\n  }\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update Clinic",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+                  {"key": "Content-Type", "value": "application/json"}
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"phoneNumber\": \"01198765432\",\n  \"slotDurationMinutes\": 20\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/clinics/{{clinicId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "clinics", "{{clinicId}}"]
+                },
+                "description": "Update clinic details"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440200\",\n  \"phoneNumber\": \"01198765432\",\n  \"slotDurationMinutes\": 20,\n  \"updatedAt\": \"2024-01-15T11:00:00.000Z\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Toggle Clinic Active",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/clinics/{{clinicId}}/toggle-active",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "clinics", "{{clinicId}}", "toggle-active"]
+                },
+                "description": "Toggle clinic active/inactive status"
+              },
+              "response": [
+                {
+                  "name": "Success - Deactivated",
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440200\",\n  \"isActive\": false,\n  \"message\": \"Clinic deactivated\"\n}"
+                },
+                {
+                  "name": "Success - Activated",
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440200\",\n  \"isActive\": true,\n  \"message\": \"Clinic activated\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Delete Clinic",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/doctors/clinics/{{clinicId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["doctors", "clinics", "{{clinicId}}"]
+                },
+                "description": "Delete a clinic"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"message\": \"Clinic deleted successfully\"\n}"
+                },
+                {
+                  "name": "Error - Has Appointments",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"statusCode\": 400,\n  \"message\": \"Cannot delete clinic with active appointments\",\n  \"error\": \"Bad Request\"\n}"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Schedules (Doctor)",
+      "item": [
+        {
+          "name": "Get Clinic Schedules",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.length > 0) {",
+                  "        pm.collectionVariables.set('scheduleId', jsonData[0].id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/doctors/clinics/{{clinicId}}/schedules",
+              "host": ["{{baseUrl}}"],
+              "path": ["doctors", "clinics", "{{clinicId}}", "schedules"]
+            },
+            "description": "Get all schedules for a clinic"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "[\n  {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440220\",\n    \"dayOfWeek\": \"SUNDAY\",\n    \"shifts\": [\n      {\"startTime\": \"09:00\", \"endTime\": \"14:00\", \"breakTime\": \"12:00\"}\n    ],\n    \"slotDuration\": 30,\n    \"isActive\": true\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Create Schedule",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('scheduleId', jsonData.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dayOfWeek\": \"SUNDAY\",\n  \"shifts\": [\n    {\n      \"startTime\": \"09:00\",\n      \"endTime\": \"14:00\",\n      \"breakTime\": \"12:00\"\n    }\n  ],\n  \"slotDuration\": 30,\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/doctors/clinics/{{clinicId}}/schedules",
+              "host": ["{{baseUrl}}"],
+              "path": ["doctors", "clinics", "{{clinicId}}", "schedules"]
+            },
+            "description": "Create a schedule for a day"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440220\",\n  \"clinicId\": \"550e8400-e29b-41d4-a716-446655440200\",\n  \"dayOfWeek\": \"SUNDAY\",\n  \"shifts\": [\n    {\"startTime\": \"09:00\", \"endTime\": \"14:00\", \"breakTime\": \"12:00\"}\n  ],\n  \"slotDuration\": 30,\n  \"isActive\": true,\n  \"createdAt\": \"2024-01-15T10:30:00.000Z\"\n}"
+            },
+            {
+              "name": "Error - Schedule Exists",
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"statusCode\": 409,\n  \"message\": \"Schedule for SUNDAY already exists\",\n  \"error\": \"Conflict\"\n}"
+            },
+            {
+              "name": "Error - Invalid Day",
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"statusCode\": 400,\n  \"message\": [\"dayOfWeek must be one of: SUNDAY, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY\"],\n  \"error\": \"Bad Request\"\n}"
+            },
+            {
+              "name": "Error - Invalid Time Format",
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"statusCode\": 400,\n  \"message\": [\"shifts.0.startTime must be in HH:mm format\"],\n  \"error\": \"Bad Request\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Schedule",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"shifts\": [\n    {\n      \"startTime\": \"10:00\",\n      \"endTime\": \"15:00\"\n    }\n  ],\n  \"slotDuration\": 20\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/doctors/clinics/{{clinicId}}/schedules/{{scheduleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["doctors", "clinics", "{{clinicId}}", "schedules", "{{scheduleId}}"]
+            },
+            "description": "Update a schedule"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440220\",\n  \"shifts\": [\n    {\"startTime\": \"10:00\", \"endTime\": \"15:00\"}\n  ],\n  \"slotDuration\": 20,\n  \"updatedAt\": \"2024-01-15T11:00:00.000Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Schedule",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/doctors/clinics/{{clinicId}}/schedules/{{scheduleId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["doctors", "clinics", "{{clinicId}}", "schedules", "{{scheduleId}}"]
+            },
+            "description": "Delete a schedule"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"message\": \"Schedule deleted successfully\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Services (Doctor)",
+      "item": [
+        {
+          "name": "Get Clinic Services",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.length > 0) {",
+                  "        pm.collectionVariables.set('serviceId', jsonData[0].id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/doctors/clinics/{{clinicId}}/services",
+              "host": ["{{baseUrl}}"],
+              "path": ["doctors", "clinics", "{{clinicId}}", "services"]
+            },
+            "description": "Get all services for a clinic"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "[\n  {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440230\",\n    \"serviceType\": \"FIRST_VISIT\",\n    \"name\": {\"ar\": \"كشف أول\", \"en\": \"First Visit\"},\n    \"price\": 300,\n    \"duration\": 30,\n    \"isActive\": true\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Create Service",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('serviceId', jsonData.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceType\": \"FIRST_VISIT\",\n  \"name\": {\n    \"ar\": \"كشف أول\",\n    \"en\": \"First Visit\"\n  },\n  \"price\": 300,\n  \"duration\": 30,\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/doctors/clinics/{{clinicId}}/services",
+              "host": ["{{baseUrl}}"],
+              "path": ["doctors", "clinics", "{{clinicId}}", "services"]
+            },
+            "description": "Create a service type"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440230\",\n  \"clinicId\": \"550e8400-e29b-41d4-a716-446655440200\",\n  \"serviceType\": \"FIRST_VISIT\",\n  \"name\": {\"ar\": \"كشف أول\", \"en\": \"First Visit\"},\n  \"price\": 300,\n  \"duration\": 30,\n  \"isActive\": true,\n  \"createdAt\": \"2024-01-15T10:30:00.000Z\"\n}"
+            },
+            {
+              "name": "Error - Service Exists",
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"statusCode\": 409,\n  \"message\": \"Service type FIRST_VISIT already exists for this clinic\",\n  \"error\": \"Conflict\"\n}"
+            },
+            {
+              "name": "Error - Invalid Service Type",
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"statusCode\": 400,\n  \"message\": [\"serviceType must be one of: FIRST_VISIT, RE_VISIT, CONSULTATION_PHONE, CONSULTATION_VIDEO\"],\n  \"error\": \"Bad Request\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Service",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 350,\n  \"duration\": 25\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/doctors/clinics/{{clinicId}}/services/{{serviceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["doctors", "clinics", "{{clinicId}}", "services", "{{serviceId}}"]
+            },
+            "description": "Update a service"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440230\",\n  \"price\": 350,\n  \"duration\": 25,\n  \"updatedAt\": \"2024-01-15T11:00:00.000Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Toggle Service Active",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/doctors/clinics/{{clinicId}}/services/{{serviceId}}/toggle-active",
+              "host": ["{{baseUrl}}"],
+              "path": ["doctors", "clinics", "{{clinicId}}", "services", "{{serviceId}}", "toggle-active"]
+            },
+            "description": "Toggle service active/inactive"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440230\",\n  \"isActive\": false\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Service",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/doctors/clinics/{{clinicId}}/services/{{serviceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["doctors", "clinics", "{{clinicId}}", "services", "{{serviceId}}"]
+            },
+            "description": "Delete a service"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"message\": \"Service deleted successfully\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

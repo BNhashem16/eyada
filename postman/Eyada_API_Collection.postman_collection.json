@@ -1,0 +1,1513 @@
+{
+  "info": {
+    "name": "Eyada Clinic Booking API",
+    "_postman_id": "eyada-clinic-api-v1",
+    "description": "Complete API documentation for Eyada Clinic Booking System\n\n## Authentication\n- Most endpoints require JWT Bearer token\n- Access Token validity: 15 minutes\n- Refresh Token validity: 7 days\n\n## Roles\n- ADMIN: System administration\n- DOCTOR: Clinic and appointment management\n- SECRETARY: Clinic appointment management\n- PATIENT: Booking and profile management\n\n## Rate Limits\n- Short: 3 req/1s\n- Medium: 20 req/10s\n- Long: 100 req/60s",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "doctorId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "patientId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "clinicId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "appointmentId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "specialtyId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "stateId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "cityId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "serviceId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "scheduleId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "familyMemberId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "Welcome",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": ["{{baseUrl}}"],
+              "path": [""]
+            },
+            "description": "Welcome endpoint - returns Hello World message"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/",
+                  "host": ["{{baseUrl}}"],
+                  "path": [""]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"message\": \"Hello World!\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Health check endpoint - returns system status"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/health",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["health"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"status\": \"ok\",\n  \"timestamp\": \"2024-01-15T10:30:00.000Z\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register - Patient",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', jsonData.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', jsonData.refreshToken);",
+                  "    pm.collectionVariables.set('userId', jsonData.user.id);",
+                  "    pm.collectionVariables.set('patientId', jsonData.user.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"patient@example.com\",\n  \"phoneNumber\": \"01012345678\",\n  \"password\": \"Password123!\",\n  \"fullName\": \"Ahmed Mohamed\",\n  \"role\": \"PATIENT\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Register a new patient account\n\n**Phone Format:** Egyptian format 01[0125]XXXXXXXX\n**Password:** Min 8 chars, uppercase, lowercase, number/special"
+          },
+          "response": [
+            {
+              "name": "Success - Patient Created",
+              "originalRequest": {
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"patient@example.com\",\n  \"phoneNumber\": \"01012345678\",\n  \"password\": \"Password123!\",\n  \"fullName\": \"Ahmed Mohamed\",\n  \"role\": \"PATIENT\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/register",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "register"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"user\": {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"email\": \"patient@example.com\",\n    \"fullName\": \"Ahmed Mohamed\",\n    \"phoneNumber\": \"01012345678\",\n    \"role\": \"PATIENT\"\n  }\n}"
+            },
+            {
+              "name": "Error - Email Already Exists",
+              "originalRequest": {
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"patient@example.com\",\n  \"phoneNumber\": \"01012345678\",\n  \"password\": \"Password123!\",\n  \"fullName\": \"Ahmed Mohamed\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/register",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "register"]
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"statusCode\": 409,\n  \"message\": \"Email already exists\",\n  \"error\": \"Conflict\"\n}"
+            },
+            {
+              "name": "Error - Invalid Phone Format",
+              "originalRequest": {
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"test@example.com\",\n  \"phoneNumber\": \"123456789\",\n  \"password\": \"Password123!\",\n  \"fullName\": \"Test User\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/register",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "register"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"statusCode\": 400,\n  \"message\": [\"phoneNumber must be a valid Egyptian phone number (01[0125]XXXXXXXX)\"],\n  \"error\": \"Bad Request\"\n}"
+            },
+            {
+              "name": "Error - Weak Password",
+              "originalRequest": {
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"test@example.com\",\n  \"phoneNumber\": \"01012345678\",\n  \"password\": \"weak\",\n  \"fullName\": \"Test User\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/register",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "register"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"statusCode\": 400,\n  \"message\": [\"password must contain uppercase, lowercase, and number or special character\", \"password must be longer than or equal to 8 characters\"],\n  \"error\": \"Bad Request\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Register - Doctor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', jsonData.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', jsonData.refreshToken);",
+                  "    pm.collectionVariables.set('userId', jsonData.user.id);",
+                  "    pm.collectionVariables.set('doctorId', jsonData.user.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"doctor@example.com\",\n  \"phoneNumber\": \"01112345678\",\n  \"password\": \"Doctor123!\",\n  \"fullName\": \"Dr. Mohamed Ali\",\n  \"role\": \"DOCTOR\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Register a new doctor account\n\n**Note:** Doctor must be approved by admin before being visible"
+          },
+          "response": [
+            {
+              "name": "Success - Doctor Created",
+              "originalRequest": {
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"doctor@example.com\",\n  \"phoneNumber\": \"01112345678\",\n  \"password\": \"Doctor123!\",\n  \"fullName\": \"Dr. Mohamed Ali\",\n  \"role\": \"DOCTOR\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/register",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "register"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"user\": {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440001\",\n    \"email\": \"doctor@example.com\",\n    \"fullName\": \"Dr. Mohamed Ali\",\n    \"phoneNumber\": \"01112345678\",\n    \"role\": \"DOCTOR\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', jsonData.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', jsonData.refreshToken);",
+                  "    pm.collectionVariables.set('userId', jsonData.user.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"patient@example.com\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login with email and password\n\n**Rate Limit:** 10 attempts per hour"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"patient@example.com\",\n  \"password\": \"Password123!\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "login"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"user\": {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"email\": \"patient@example.com\",\n    \"fullName\": \"Ahmed Mohamed\",\n    \"phoneNumber\": \"01012345678\",\n    \"role\": \"PATIENT\"\n  }\n}"
+            },
+            {
+              "name": "Error - Invalid Credentials",
+              "originalRequest": {
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"patient@example.com\",\n  \"password\": \"wrongpassword\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "login"]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"statusCode\": 401,\n  \"message\": \"Invalid credentials\",\n  \"error\": \"Unauthorized\"\n}"
+            },
+            {
+              "name": "Error - User Not Found",
+              "originalRequest": {
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"notexist@example.com\",\n  \"password\": \"Password123!\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "login"]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"statusCode\": 401,\n  \"message\": \"Invalid credentials\",\n  \"error\": \"Unauthorized\"\n}"
+            },
+            {
+              "name": "Error - Rate Limited",
+              "originalRequest": {
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"patient@example.com\",\n  \"password\": \"wrongpassword\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "login"]
+                }
+              },
+              "status": "Too Many Requests",
+              "code": 429,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"statusCode\": 429,\n  \"message\": \"Too many login attempts. Please try again later.\",\n  \"error\": \"Too Many Requests\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', jsonData.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', jsonData.refreshToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
+            },
+            "description": "Get new access and refresh tokens using refresh token"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/refresh",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "refresh"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\"\n}"
+            },
+            {
+              "name": "Error - Invalid Token",
+              "originalRequest": {
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"refreshToken\": \"invalid-token\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/refresh",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "refresh"]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"statusCode\": 401,\n  \"message\": \"Invalid refresh token\",\n  \"error\": \"Unauthorized\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Current User (Me)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            },
+            "description": "Get current authenticated user profile"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/me",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "me"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"email\": \"patient@example.com\",\n  \"fullName\": \"Ahmed Mohamed\",\n  \"phoneNumber\": \"01012345678\",\n  \"role\": \"PATIENT\",\n  \"createdAt\": \"2024-01-15T10:30:00.000Z\",\n  \"updatedAt\": \"2024-01-15T10:30:00.000Z\"\n}"
+            },
+            {
+              "name": "Error - Unauthorized",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/auth/me",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "me"]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"statusCode\": 401,\n  \"message\": \"Unauthorized\",\n  \"error\": \"Unauthorized\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"Password123!\",\n  \"newPassword\": \"NewPassword456!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/change-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "change-password"]
+            },
+            "description": "Change user password"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentPassword\": \"Password123!\",\n  \"newPassword\": \"NewPassword456!\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/change-password",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "change-password"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"message\": \"Password changed successfully\"\n}"
+            },
+            {
+              "name": "Error - Wrong Current Password",
+              "originalRequest": {
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"currentPassword\": \"WrongPassword\",\n  \"newPassword\": \"NewPassword456!\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/change-password",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "change-password"]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"statusCode\": 401,\n  \"message\": \"Current password is incorrect\",\n  \"error\": \"Unauthorized\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            },
+            "description": "Logout from current device"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/logout",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "logout"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"message\": \"Logged out successfully\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Logout All Devices",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout-all",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout-all"]
+            },
+            "description": "Logout from all devices"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "url": {
+                  "raw": "{{baseUrl}}/auth/logout-all",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "logout-all"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"message\": \"Logged out from all devices\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Specialties",
+      "item": [
+        {
+          "name": "Get All Specialties (Public)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.length > 0) {",
+                  "        pm.collectionVariables.set('specialtyId', jsonData[0].id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/specialties",
+              "host": ["{{baseUrl}}"],
+              "path": ["specialties"]
+            },
+            "description": "Get all active specialties (no auth required)"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/specialties",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["specialties"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "[\n  {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440010\",\n    \"name\": {\n      \"ar\": \"طب عام\",\n      \"en\": \"General Medicine\"\n    },\n    \"description\": {\n      \"ar\": \"الطب العام والرعاية الأولية\",\n      \"en\": \"General medicine and primary care\"\n    },\n    \"icon\": \"general-medicine\",\n    \"sortOrder\": 1,\n    \"isActive\": true\n  },\n  {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440011\",\n    \"name\": {\n      \"ar\": \"طب الأطفال\",\n      \"en\": \"Pediatrics\"\n    },\n    \"description\": {\n      \"ar\": \"رعاية صحة الأطفال\",\n      \"en\": \"Children's healthcare\"\n    },\n    \"icon\": \"pediatrics\",\n    \"sortOrder\": 2,\n    \"isActive\": true\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Get Specialty by ID (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/specialties/{{specialtyId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["specialties", "{{specialtyId}}"]
+            },
+            "description": "Get a specific specialty by ID"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/specialties/{{specialtyId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["specialties", "{{specialtyId}}"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440010\",\n  \"name\": {\n    \"ar\": \"طب عام\",\n    \"en\": \"General Medicine\"\n  },\n  \"description\": {\n    \"ar\": \"الطب العام والرعاية الأولية\",\n    \"en\": \"General medicine and primary care\"\n  },\n  \"icon\": \"general-medicine\",\n  \"sortOrder\": 1,\n  \"isActive\": true\n}"
+            },
+            {
+              "name": "Error - Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/specialties/00000000-0000-0000-0000-000000000000",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["specialties", "00000000-0000-0000-0000-000000000000"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"statusCode\": 404,\n  \"message\": \"Specialty not found\",\n  \"error\": \"Not Found\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Specialty (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('specialtyId', jsonData.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": {\n    \"ar\": \"طب القلب\",\n    \"en\": \"Cardiology\"\n  },\n  \"description\": {\n    \"ar\": \"تخصص أمراض القلب والأوعية الدموية\",\n    \"en\": \"Heart and cardiovascular diseases\"\n  },\n  \"icon\": \"heart\",\n  \"sortOrder\": 5,\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/specialties",
+              "host": ["{{baseUrl}}"],
+              "path": ["specialties"]
+            },
+            "description": "Create a new specialty (Admin only)"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": {\n    \"ar\": \"طب القلب\",\n    \"en\": \"Cardiology\"\n  },\n  \"description\": {\n    \"ar\": \"تخصص أمراض القلب والأوعية الدموية\",\n    \"en\": \"Heart and cardiovascular diseases\"\n  },\n  \"icon\": \"heart\",\n  \"sortOrder\": 5,\n  \"isActive\": true\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/specialties",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["specialties"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440012\",\n  \"name\": {\n    \"ar\": \"طب القلب\",\n    \"en\": \"Cardiology\"\n  },\n  \"description\": {\n    \"ar\": \"تخصص أمراض القلب والأوعية الدموية\",\n    \"en\": \"Heart and cardiovascular diseases\"\n  },\n  \"icon\": \"heart\",\n  \"sortOrder\": 5,\n  \"isActive\": true,\n  \"createdAt\": \"2024-01-15T10:30:00.000Z\",\n  \"updatedAt\": \"2024-01-15T10:30:00.000Z\"\n}"
+            },
+            {
+              "name": "Error - Forbidden (Not Admin)",
+              "originalRequest": {
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": {\n    \"ar\": \"طب القلب\",\n    \"en\": \"Cardiology\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/specialties",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["specialties"]
+                }
+              },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"statusCode\": 403,\n  \"message\": \"Forbidden resource\",\n  \"error\": \"Forbidden\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Specialty (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": {\n    \"ar\": \"طب القلب والأوعية الدموية\",\n    \"en\": \"Cardiology & Vascular\"\n  },\n  \"sortOrder\": 3\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/specialties/{{specialtyId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["specialties", "{{specialtyId}}"]
+            },
+            "description": "Update a specialty (Admin only)"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": {\n    \"ar\": \"طب القلب والأوعية الدموية\",\n    \"en\": \"Cardiology & Vascular\"\n  },\n  \"sortOrder\": 3\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/specialties/{{specialtyId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["specialties", "{{specialtyId}}"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440012\",\n  \"name\": {\n    \"ar\": \"طب القلب والأوعية الدموية\",\n    \"en\": \"Cardiology & Vascular\"\n  },\n  \"sortOrder\": 3,\n  \"updatedAt\": \"2024-01-15T11:00:00.000Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Specialty (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/specialties/{{specialtyId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["specialties", "{{specialtyId}}"]
+            },
+            "description": "Delete a specialty (Admin only)"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "DELETE",
+                "url": {
+                  "raw": "{{baseUrl}}/specialties/{{specialtyId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["specialties", "{{specialtyId}}"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"message\": \"Specialty deleted successfully\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Locations",
+      "item": [
+        {
+          "name": "States",
+          "item": [
+            {
+              "name": "Get All States (Public)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    var jsonData = pm.response.json();",
+                      "    if (jsonData.length > 0) {",
+                      "        pm.collectionVariables.set('stateId', jsonData[0].id);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/states",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["states"]
+                },
+                "description": "Get all active states/governorates"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "originalRequest": {
+                    "method": "GET",
+                    "url": {
+                      "raw": "{{baseUrl}}/states",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["states"]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "[\n  {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440020\",\n    \"name\": {\n      \"ar\": \"القاهرة\",\n      \"en\": \"Cairo\"\n    },\n    \"code\": \"CAI\",\n    \"sortOrder\": 1,\n    \"isActive\": true\n  },\n  {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440021\",\n    \"name\": {\n      \"ar\": \"الإسكندرية\",\n      \"en\": \"Alexandria\"\n    },\n    \"code\": \"ALX\",\n    \"sortOrder\": 2,\n    \"isActive\": true\n  }\n]"
+                }
+              ]
+            },
+            {
+              "name": "Get State by ID (Public)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/states/{{stateId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["states", "{{stateId}}"]
+                },
+                "description": "Get a specific state by ID"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "originalRequest": {
+                    "method": "GET",
+                    "url": {
+                      "raw": "{{baseUrl}}/states/{{stateId}}",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["states", "{{stateId}}"]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440020\",\n  \"name\": {\n    \"ar\": \"القاهرة\",\n    \"en\": \"Cairo\"\n  },\n  \"code\": \"CAI\",\n  \"sortOrder\": 1,\n  \"isActive\": true\n}"
+                },
+                {
+                  "name": "Error - Not Found",
+                  "originalRequest": {
+                    "method": "GET",
+                    "url": {
+                      "raw": "{{baseUrl}}/states/00000000-0000-0000-0000-000000000000",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["states", "00000000-0000-0000-0000-000000000000"]
+                    }
+                  },
+                  "status": "Not Found",
+                  "code": 404,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"statusCode\": 404,\n  \"message\": \"State not found\",\n  \"error\": \"Not Found\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Create State (Admin)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    var jsonData = pm.response.json();",
+                      "    pm.collectionVariables.set('stateId', jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": {\n    \"ar\": \"الجيزة\",\n    \"en\": \"Giza\"\n  },\n  \"code\": \"GIZ\",\n  \"sortOrder\": 3,\n  \"isActive\": true\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/states",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["states"]
+                },
+                "description": "Create a new state (Admin only)"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "originalRequest": {
+                    "method": "POST",
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": {\n    \"ar\": \"الجيزة\",\n    \"en\": \"Giza\"\n  },\n  \"code\": \"GIZ\",\n  \"sortOrder\": 3,\n  \"isActive\": true\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/states",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["states"]
+                    }
+                  },
+                  "status": "Created",
+                  "code": 201,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440022\",\n  \"name\": {\n    \"ar\": \"الجيزة\",\n    \"en\": \"Giza\"\n  },\n  \"code\": \"GIZ\",\n  \"sortOrder\": 3,\n  \"isActive\": true,\n  \"createdAt\": \"2024-01-15T10:30:00.000Z\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update State (Admin)",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sortOrder\": 2\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/states/{{stateId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["states", "{{stateId}}"]
+                },
+                "description": "Update a state (Admin only)"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "originalRequest": {
+                    "method": "PATCH",
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"sortOrder\": 2\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/states/{{stateId}}",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["states", "{{stateId}}"]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440022\",\n  \"name\": {\n    \"ar\": \"الجيزة\",\n    \"en\": \"Giza\"\n  },\n  \"code\": \"GIZ\",\n  \"sortOrder\": 2,\n  \"isActive\": true\n}"
+                }
+              ]
+            },
+            {
+              "name": "Delete State (Admin)",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/states/{{stateId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["states", "{{stateId}}"]
+                },
+                "description": "Delete a state (Admin only)"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "originalRequest": {
+                    "method": "DELETE",
+                    "url": {
+                      "raw": "{{baseUrl}}/states/{{stateId}}",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["states", "{{stateId}}"]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"message\": \"State deleted successfully\"\n}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Cities",
+          "item": [
+            {
+              "name": "Get All Cities (Public)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 200) {",
+                      "    var jsonData = pm.response.json();",
+                      "    if (jsonData.length > 0) {",
+                      "        pm.collectionVariables.set('cityId', jsonData[0].id);",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/cities",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["cities"]
+                },
+                "description": "Get all active cities"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "originalRequest": {
+                    "method": "GET",
+                    "url": {
+                      "raw": "{{baseUrl}}/cities",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["cities"]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "[\n  {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440030\",\n    \"name\": {\n      \"ar\": \"مدينة نصر\",\n      \"en\": \"Nasr City\"\n    },\n    \"stateId\": \"550e8400-e29b-41d4-a716-446655440020\",\n    \"sortOrder\": 1,\n    \"isActive\": true\n  },\n  {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440031\",\n    \"name\": {\n      \"ar\": \"المعادي\",\n      \"en\": \"Maadi\"\n    },\n    \"stateId\": \"550e8400-e29b-41d4-a716-446655440020\",\n    \"sortOrder\": 2,\n    \"isActive\": true\n  }\n]"
+                }
+              ]
+            },
+            {
+              "name": "Get Cities by State (Public)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/cities?stateId={{stateId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["cities"],
+                  "query": [
+                    {
+                      "key": "stateId",
+                      "value": "{{stateId}}"
+                    }
+                  ]
+                },
+                "description": "Get cities filtered by state"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "originalRequest": {
+                    "method": "GET",
+                    "url": {
+                      "raw": "{{baseUrl}}/cities?stateId={{stateId}}",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["cities"],
+                      "query": [
+                        {
+                          "key": "stateId",
+                          "value": "{{stateId}}"
+                        }
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "[\n  {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440030\",\n    \"name\": {\n      \"ar\": \"مدينة نصر\",\n      \"en\": \"Nasr City\"\n    },\n    \"stateId\": \"550e8400-e29b-41d4-a716-446655440020\",\n    \"sortOrder\": 1,\n    \"isActive\": true\n  }\n]"
+                }
+              ]
+            },
+            {
+              "name": "Get City by ID (Public)",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/cities/{{cityId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["cities", "{{cityId}}"]
+                },
+                "description": "Get a specific city by ID"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "originalRequest": {
+                    "method": "GET",
+                    "url": {
+                      "raw": "{{baseUrl}}/cities/{{cityId}}",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["cities", "{{cityId}}"]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440030\",\n  \"name\": {\n    \"ar\": \"مدينة نصر\",\n    \"en\": \"Nasr City\"\n  },\n  \"stateId\": \"550e8400-e29b-41d4-a716-446655440020\",\n  \"sortOrder\": 1,\n  \"isActive\": true\n}"
+                }
+              ]
+            },
+            {
+              "name": "Create City (Admin)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    var jsonData = pm.response.json();",
+                      "    pm.collectionVariables.set('cityId', jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"stateId\": \"{{stateId}}\",\n  \"name\": {\n    \"ar\": \"التجمع الخامس\",\n    \"en\": \"Fifth Settlement\"\n  },\n  \"sortOrder\": 3,\n  \"isActive\": true\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/cities",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["cities"]
+                },
+                "description": "Create a new city (Admin only)"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "originalRequest": {
+                    "method": "POST",
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"stateId\": \"{{stateId}}\",\n  \"name\": {\n    \"ar\": \"التجمع الخامس\",\n    \"en\": \"Fifth Settlement\"\n  },\n  \"sortOrder\": 3,\n  \"isActive\": true\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/cities",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["cities"]
+                    }
+                  },
+                  "status": "Created",
+                  "code": 201,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440032\",\n  \"stateId\": \"550e8400-e29b-41d4-a716-446655440020\",\n  \"name\": {\n    \"ar\": \"التجمع الخامس\",\n    \"en\": \"Fifth Settlement\"\n  },\n  \"sortOrder\": 3,\n  \"isActive\": true,\n  \"createdAt\": \"2024-01-15T10:30:00.000Z\"\n}"
+                },
+                {
+                  "name": "Error - State Not Found",
+                  "originalRequest": {
+                    "method": "POST",
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"stateId\": \"00000000-0000-0000-0000-000000000000\",\n  \"name\": {\n    \"ar\": \"مدينة\",\n    \"en\": \"City\"\n  }\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/cities",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["cities"]
+                    }
+                  },
+                  "status": "Not Found",
+                  "code": 404,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"statusCode\": 404,\n  \"message\": \"State not found\",\n  \"error\": \"Not Found\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update City (Admin)",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sortOrder\": 1\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/cities/{{cityId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["cities", "{{cityId}}"]
+                },
+                "description": "Update a city (Admin only)"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "originalRequest": {
+                    "method": "PATCH",
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"sortOrder\": 1\n}"
+                    },
+                    "url": {
+                      "raw": "{{baseUrl}}/cities/{{cityId}}",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["cities", "{{cityId}}"]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440032\",\n  \"name\": {\n    \"ar\": \"التجمع الخامس\",\n    \"en\": \"Fifth Settlement\"\n  },\n  \"sortOrder\": 1,\n  \"isActive\": true\n}"
+                }
+              ]
+            },
+            {
+              "name": "Delete City (Admin)",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/cities/{{cityId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["cities", "{{cityId}}"]
+                },
+                "description": "Delete a city (Admin only)"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "originalRequest": {
+                    "method": "DELETE",
+                    "url": {
+                      "raw": "{{baseUrl}}/cities/{{cityId}}",
+                      "host": ["{{baseUrl}}"],
+                      "path": ["cities", "{{cityId}}"]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "body": "{\n  \"message\": \"City deleted successfully\"\n}"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

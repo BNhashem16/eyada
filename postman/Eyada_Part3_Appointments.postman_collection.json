@@ -1,0 +1,797 @@
+{
+  "info": {
+    "name": "Eyada API - Part 3: Appointments",
+    "_postman_id": "eyada-part3-v1",
+    "description": "Appointments endpoints for Patients, Doctors, and Secretaries",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {"key": "baseUrl", "value": "http://localhost:3000"},
+    {"key": "accessToken", "value": ""},
+    {"key": "appointmentId", "value": ""},
+    {"key": "clinicId", "value": ""},
+    {"key": "serviceId", "value": ""},
+    {"key": "patientProfileId", "value": ""}
+  ],
+  "item": [
+    {
+      "name": "Patient Appointments",
+      "item": [
+        {
+          "name": "Get My Appointments",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.length > 0) {",
+                  "        pm.collectionVariables.set('appointmentId', jsonData[0].id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/patients/appointments",
+              "host": ["{{baseUrl}}"],
+              "path": ["patients", "appointments"],
+              "query": [
+                {"key": "status", "value": "PENDING", "disabled": true},
+                {"key": "status", "value": "CONFIRMED", "disabled": true},
+                {"key": "status", "value": "COMPLETED", "disabled": true}
+              ]
+            },
+            "description": "Get all appointments for current patient"
+          },
+          "response": [
+            {
+              "name": "Success - All Appointments",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "[\n  {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440500\",\n    \"appointmentDate\": \"2024-01-20\",\n    \"appointmentTime\": \"10:00\",\n    \"status\": \"CONFIRMED\",\n    \"clinic\": {\n      \"name\": {\"ar\": \"عيادة النور\", \"en\": \"Al-Nour Clinic\"},\n      \"address\": {\"ar\": \"شارع التحرير\", \"en\": \"Tahrir Street\"}\n    },\n    \"doctor\": {\n      \"user\": {\"fullName\": \"Dr. Mohamed Ali\"}\n    },\n    \"serviceType\": {\n      \"name\": {\"ar\": \"كشف أول\", \"en\": \"First Visit\"},\n      \"price\": 300\n    },\n    \"paymentStatus\": \"PENDING\"\n  },\n  {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440501\",\n    \"appointmentDate\": \"2024-01-15\",\n    \"appointmentTime\": \"14:30\",\n    \"status\": \"COMPLETED\",\n    \"clinic\": {\n      \"name\": {\"ar\": \"عيادة الشفاء\", \"en\": \"Al-Shifa Clinic\"}\n    },\n    \"paymentStatus\": \"PAID\"\n  }\n]"
+            },
+            {
+              "name": "Success - Filtered by Status",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "[\n  {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440500\",\n    \"status\": \"PENDING\",\n    \"appointmentDate\": \"2024-01-20\"\n  }\n]"
+            },
+            {
+              "name": "Success - Empty",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "[]"
+            }
+          ]
+        },
+        {
+          "name": "Create Appointment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('appointmentId', jsonData.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clinicId\": \"{{clinicId}}\",\n  \"serviceTypeId\": \"{{serviceId}}\",\n  \"appointmentDate\": \"2024-01-20\",\n  \"appointmentTime\": \"10:00\",\n  \"notes\": \"أعاني من صداع متكرر منذ أسبوع\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/patients/appointments",
+              "host": ["{{baseUrl}}"],
+              "path": ["patients", "appointments"]
+            },
+            "description": "Book a new appointment"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440500\",\n  \"clinicId\": \"550e8400-e29b-41d4-a716-446655440200\",\n  \"serviceTypeId\": \"550e8400-e29b-41d4-a716-446655440230\",\n  \"appointmentDate\": \"2024-01-20\",\n  \"appointmentTime\": \"10:00\",\n  \"status\": \"PENDING\",\n  \"paymentStatus\": \"PENDING\",\n  \"notes\": \"أعاني من صداع متكرر منذ أسبوع\",\n  \"createdAt\": \"2024-01-15T10:30:00.000Z\"\n}"
+            },
+            {
+              "name": "Success - For Family Member",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440502\",\n  \"patientProfileId\": \"550e8400-e29b-41d4-a716-446655440410\",\n  \"appointmentDate\": \"2024-01-20\",\n  \"appointmentTime\": \"11:00\",\n  \"status\": \"PENDING\",\n  \"message\": \"Appointment booked for family member\"\n}"
+            },
+            {
+              "name": "Error - Slot Not Available",
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"statusCode\": 409,\n  \"message\": \"This time slot is already booked\",\n  \"error\": \"Conflict\"\n}"
+            },
+            {
+              "name": "Error - Clinic Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"statusCode\": 404,\n  \"message\": \"Clinic not found\",\n  \"error\": \"Not Found\"\n}"
+            },
+            {
+              "name": "Error - Invalid Date (Past)",
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"statusCode\": 400,\n  \"message\": \"Cannot book appointments in the past\",\n  \"error\": \"Bad Request\"\n}"
+            },
+            {
+              "name": "Error - Clinic Closed",
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"statusCode\": 400,\n  \"message\": \"Clinic is closed on this day\",\n  \"error\": \"Bad Request\"\n}"
+            },
+            {
+              "name": "Error - Invalid Time Format",
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"statusCode\": 400,\n  \"message\": [\"appointmentTime must be in HH:mm format\"],\n  \"error\": \"Bad Request\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Appointment for Family Member",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clinicId\": \"{{clinicId}}\",\n  \"serviceTypeId\": \"{{serviceId}}\",\n  \"appointmentDate\": \"2024-01-20\",\n  \"appointmentTime\": \"11:00\",\n  \"patientProfileId\": \"{{patientProfileId}}\",\n  \"notes\": \"حمى وسعال للطفل\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/patients/appointments",
+              "host": ["{{baseUrl}}"],
+              "path": ["patients", "appointments"]
+            },
+            "description": "Book appointment for a family member"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440502\",\n  \"patientProfileId\": \"550e8400-e29b-41d4-a716-446655440410\",\n  \"appointmentDate\": \"2024-01-20\",\n  \"appointmentTime\": \"11:00\",\n  \"status\": \"PENDING\"\n}"
+            },
+            {
+              "name": "Error - Family Member Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"statusCode\": 404,\n  \"message\": \"Family member not found\",\n  \"error\": \"Not Found\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Appointment Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/patients/appointments/{{appointmentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["patients", "appointments", "{{appointmentId}}"]
+            },
+            "description": "Get detailed info about an appointment"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440500\",\n  \"appointmentDate\": \"2024-01-20\",\n  \"appointmentTime\": \"10:00\",\n  \"status\": \"CONFIRMED\",\n  \"clinic\": {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440200\",\n    \"name\": {\"ar\": \"عيادة النور\", \"en\": \"Al-Nour Clinic\"},\n    \"address\": {\"ar\": \"شارع التحرير\", \"en\": \"Tahrir Street\"},\n    \"phoneNumber\": \"01112345678\",\n    \"latitude\": 30.0626,\n    \"longitude\": 31.3456\n  },\n  \"doctor\": {\n    \"user\": {\"fullName\": \"Dr. Mohamed Ali\"},\n    \"specialty\": {\"name\": {\"ar\": \"طب عام\", \"en\": \"General Medicine\"}}\n  },\n  \"serviceType\": {\n    \"name\": {\"ar\": \"كشف أول\", \"en\": \"First Visit\"},\n    \"price\": 300,\n    \"duration\": 30\n  },\n  \"paymentStatus\": \"PENDING\",\n  \"notes\": \"أعاني من صداع متكرر\",\n  \"createdAt\": \"2024-01-15T10:30:00.000Z\"\n}"
+            },
+            {
+              "name": "Error - Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"statusCode\": 404,\n  \"message\": \"Appointment not found\",\n  \"error\": \"Not Found\"\n}"
+            },
+            {
+              "name": "Error - Not Owner",
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"statusCode\": 403,\n  \"message\": \"You don't have access to this appointment\",\n  \"error\": \"Forbidden\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Cancel Appointment",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"ظروف طارئة\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/patients/appointments/{{appointmentId}}/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["patients", "appointments", "{{appointmentId}}", "cancel"]
+            },
+            "description": "Cancel an appointment"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440500\",\n  \"status\": \"CANCELLED\",\n  \"cancellationReason\": \"ظروف طارئة\",\n  \"cancelledAt\": \"2024-01-18T15:00:00.000Z\"\n}"
+            },
+            {
+              "name": "Error - Already Cancelled",
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"statusCode\": 400,\n  \"message\": \"Appointment is already cancelled\",\n  \"error\": \"Bad Request\"\n}"
+            },
+            {
+              "name": "Error - Completed",
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"statusCode\": 400,\n  \"message\": \"Cannot cancel a completed appointment\",\n  \"error\": \"Bad Request\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Medical Notes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/patients/appointments/{{appointmentId}}/medical-notes",
+              "host": ["{{baseUrl}}"],
+              "path": ["patients", "appointments", "{{appointmentId}}", "medical-notes"]
+            },
+            "description": "Get medical notes for completed appointment"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"diagnosis\": \"صداع توتري - Tension Headache\",\n  \"prescription\": \"- Panadol 500mg - 3 times daily after meals\\n- Vitamin B Complex - once daily\",\n  \"notes\": \"يُنصح بالراحة وتجنب الإجهاد. مراجعة بعد أسبوع إذا لم يتحسن.\"\n}"
+            },
+            {
+              "name": "Error - Not Completed",
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"statusCode\": 400,\n  \"message\": \"Medical notes available only for completed appointments\",\n  \"error\": \"Bad Request\"\n}"
+            },
+            {
+              "name": "Success - No Notes Yet",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"diagnosis\": null,\n  \"prescription\": null,\n  \"notes\": null\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Doctor Appointments",
+      "item": [
+        {
+          "name": "Get My Appointments",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.length > 0) {",
+                  "        pm.collectionVariables.set('appointmentId', jsonData[0].id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/doctors/appointments",
+              "host": ["{{baseUrl}}"],
+              "path": ["doctors", "appointments"],
+              "query": [
+                {"key": "clinicId", "value": "{{clinicId}}", "disabled": true},
+                {"key": "date", "value": "2024-01-20", "disabled": true},
+                {"key": "status", "value": "PENDING", "disabled": true}
+              ]
+            },
+            "description": "Get all appointments for current doctor"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "[\n  {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440500\",\n    \"appointmentDate\": \"2024-01-20\",\n    \"appointmentTime\": \"10:00\",\n    \"status\": \"PENDING\",\n    \"patient\": {\n      \"user\": {\n        \"fullName\": \"Ahmed Mohamed\",\n        \"phoneNumber\": \"01012345678\"\n      },\n      \"age\": 34,\n      \"gender\": \"MALE\"\n    },\n    \"clinic\": {\n      \"name\": {\"ar\": \"عيادة النور\", \"en\": \"Al-Nour Clinic\"}\n    },\n    \"serviceType\": {\n      \"name\": {\"ar\": \"كشف أول\", \"en\": \"First Visit\"},\n      \"price\": 300\n    },\n    \"notes\": \"صداع متكرر\",\n    \"paymentStatus\": \"PENDING\"\n  }\n]"
+            },
+            {
+              "name": "Success - Filtered by Date",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "[\n  {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440500\",\n    \"appointmentDate\": \"2024-01-20\",\n    \"appointmentTime\": \"10:00\",\n    \"status\": \"PENDING\"\n  },\n  {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440501\",\n    \"appointmentDate\": \"2024-01-20\",\n    \"appointmentTime\": \"10:30\",\n    \"status\": \"CONFIRMED\"\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Get Appointment Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/doctors/appointments/{{appointmentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["doctors", "appointments", "{{appointmentId}}"]
+            },
+            "description": "Get detailed info including patient medical history"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440500\",\n  \"appointmentDate\": \"2024-01-20\",\n  \"appointmentTime\": \"10:00\",\n  \"status\": \"PENDING\",\n  \"patient\": {\n    \"user\": {\n      \"fullName\": \"Ahmed Mohamed\",\n      \"phoneNumber\": \"01012345678\"\n    },\n    \"age\": 34,\n    \"gender\": \"MALE\",\n    \"bloodType\": \"O+\",\n    \"chronicDiseases\": [\"Diabetes\"],\n    \"allergies\": [\"Penicillin\"]\n  },\n  \"clinic\": {\n    \"name\": {\"ar\": \"عيادة النور\", \"en\": \"Al-Nour Clinic\"}\n  },\n  \"serviceType\": {\n    \"name\": {\"ar\": \"كشف أول\", \"en\": \"First Visit\"},\n    \"price\": 300\n  },\n  \"notes\": \"صداع متكرر منذ أسبوع\",\n  \"previousAppointments\": [\n    {\n      \"date\": \"2023-12-15\",\n      \"diagnosis\": \"Common cold\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Appointment Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"CONFIRMED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/doctors/appointments/{{appointmentId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["doctors", "appointments", "{{appointmentId}}", "status"]
+            },
+            "description": "Update appointment status (PENDING -> CONFIRMED -> IN_PROGRESS -> COMPLETED)"
+          },
+          "response": [
+            {
+              "name": "Success - Confirmed",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440500\",\n  \"status\": \"CONFIRMED\",\n  \"updatedAt\": \"2024-01-15T11:00:00.000Z\"\n}"
+            },
+            {
+              "name": "Success - In Progress",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440500\",\n  \"status\": \"IN_PROGRESS\",\n  \"startedAt\": \"2024-01-20T10:05:00.000Z\"\n}"
+            },
+            {
+              "name": "Success - Completed",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440500\",\n  \"status\": \"COMPLETED\",\n  \"completedAt\": \"2024-01-20T10:25:00.000Z\"\n}"
+            },
+            {
+              "name": "Success - No Show",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440500\",\n  \"status\": \"NO_SHOW\",\n  \"message\": \"Patient marked as no-show\"\n}"
+            },
+            {
+              "name": "Success - Cancelled with Reason",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440500\",\n  \"status\": \"CANCELLED\",\n  \"cancellationReason\": \"Doctor unavailable\"\n}"
+            },
+            {
+              "name": "Error - Invalid Status Transition",
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"statusCode\": 400,\n  \"message\": \"Cannot change status from COMPLETED to PENDING\",\n  \"error\": \"Bad Request\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Medical Notes",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"diagnosis\": \"صداع توتري - Tension Headache\",\n  \"prescription\": \"- Panadol 500mg - 3 مرات يومياً بعد الأكل\\n- Vitamin B Complex - مرة يومياً\",\n  \"notes\": \"يُنصح بالراحة وتجنب الإجهاد. مراجعة بعد أسبوع إذا لم يتحسن الوضع.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/doctors/appointments/{{appointmentId}}/medical-notes",
+              "host": ["{{baseUrl}}"],
+              "path": ["doctors", "appointments", "{{appointmentId}}", "medical-notes"]
+            },
+            "description": "Add/update medical notes (diagnosis, prescription, notes)"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440500\",\n  \"diagnosis\": \"صداع توتري - Tension Headache\",\n  \"prescription\": \"- Panadol 500mg - 3 مرات يومياً بعد الأكل\\n- Vitamin B Complex - مرة يومياً\",\n  \"notes\": \"يُنصح بالراحة وتجنب الإجهاد.\",\n  \"updatedAt\": \"2024-01-20T10:25:00.000Z\"\n}"
+            },
+            {
+              "name": "Error - Text Too Long",
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"statusCode\": 400,\n  \"message\": [\"diagnosis must be shorter than or equal to 2000 characters\"],\n  \"error\": \"Bad Request\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Medical Notes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/doctors/appointments/{{appointmentId}}/medical-notes",
+              "host": ["{{baseUrl}}"],
+              "path": ["doctors", "appointments", "{{appointmentId}}", "medical-notes"]
+            },
+            "description": "Get medical notes for an appointment"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"diagnosis\": \"صداع توتري\",\n  \"prescription\": \"Panadol 500mg\",\n  \"notes\": \"يُنصح بالراحة\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Payment Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentStatus\": \"PAID\",\n  \"paymentMethod\": \"CASH\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/doctors/appointments/{{appointmentId}}/payment",
+              "host": ["{{baseUrl}}"],
+              "path": ["doctors", "appointments", "{{appointmentId}}", "payment"]
+            },
+            "description": "Update payment status"
+          },
+          "response": [
+            {
+              "name": "Success - Paid Cash",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440500\",\n  \"paymentStatus\": \"PAID\",\n  \"paymentMethod\": \"CASH\",\n  \"paidAt\": \"2024-01-20T10:30:00.000Z\"\n}"
+            },
+            {
+              "name": "Success - Paid Card",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440500\",\n  \"paymentStatus\": \"PAID\",\n  \"paymentMethod\": \"CARD\"\n}"
+            },
+            {
+              "name": "Success - Refunded",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440500\",\n  \"paymentStatus\": \"REFUNDED\",\n  \"refundedAt\": \"2024-01-20T11:00:00.000Z\"\n}"
+            },
+            {
+              "name": "Error - Invalid Payment Status",
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"statusCode\": 400,\n  \"message\": [\"paymentStatus must be one of: PENDING, PAID, REFUNDED\"],\n  \"error\": \"Bad Request\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Secretary Appointments",
+      "item": [
+        {
+          "name": "Get My Clinics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/secretary/appointments/clinics",
+              "host": ["{{baseUrl}}"],
+              "path": ["secretary", "appointments", "clinics"]
+            },
+            "description": "Get all clinics where secretary works"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "[\n  {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440200\",\n    \"name\": {\"ar\": \"عيادة النور\", \"en\": \"Al-Nour Clinic\"},\n    \"doctor\": {\n      \"user\": {\"fullName\": \"Dr. Mohamed Ali\"}\n    }\n  }\n]"
+            },
+            {
+              "name": "Error - Not Secretary Role",
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"statusCode\": 403,\n  \"message\": \"Forbidden resource\",\n  \"error\": \"Forbidden\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Clinic Appointments",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.length > 0) {",
+                  "        pm.collectionVariables.set('appointmentId', jsonData[0].id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/secretary/appointments",
+              "host": ["{{baseUrl}}"],
+              "path": ["secretary", "appointments"],
+              "query": [
+                {"key": "clinicId", "value": "{{clinicId}}", "disabled": true},
+                {"key": "date", "value": "2024-01-20", "disabled": true},
+                {"key": "status", "value": "PENDING", "disabled": true}
+              ]
+            },
+            "description": "Get appointments for clinics where secretary works"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "[\n  {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440500\",\n    \"appointmentDate\": \"2024-01-20\",\n    \"appointmentTime\": \"10:00\",\n    \"status\": \"PENDING\",\n    \"patient\": {\n      \"user\": {\n        \"fullName\": \"Ahmed Mohamed\",\n        \"phoneNumber\": \"01012345678\"\n      }\n    },\n    \"serviceType\": {\n      \"name\": {\"ar\": \"كشف أول\", \"en\": \"First Visit\"},\n      \"price\": 300\n    },\n    \"paymentStatus\": \"PENDING\"\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Create Appointment for Patient",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('appointmentId', jsonData.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clinicId\": \"{{clinicId}}\",\n  \"serviceTypeId\": \"{{serviceId}}\",\n  \"appointmentDate\": \"2024-01-20\",\n  \"appointmentTime\": \"14:00\",\n  \"patientProfileId\": \"{{patientProfileId}}\",\n  \"notes\": \"مريض حجز بالتليفون\",\n  \"symptoms\": \"ألم في الظهر\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/secretary/appointments",
+              "host": ["{{baseUrl}}"],
+              "path": ["secretary", "appointments"]
+            },
+            "description": "Create appointment for a patient (Secretary only)"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440503\",\n  \"clinicId\": \"550e8400-e29b-41d4-a716-446655440200\",\n  \"patientProfileId\": \"550e8400-e29b-41d4-a716-446655440400\",\n  \"appointmentDate\": \"2024-01-20\",\n  \"appointmentTime\": \"14:00\",\n  \"status\": \"PENDING\",\n  \"notes\": \"مريض حجز بالتليفون\",\n  \"symptoms\": \"ألم في الظهر\",\n  \"createdAt\": \"2024-01-15T10:30:00.000Z\"\n}"
+            },
+            {
+              "name": "Error - Not Assigned to Clinic",
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"statusCode\": 403,\n  \"message\": \"You are not assigned to this clinic\",\n  \"error\": \"Forbidden\"\n}"
+            },
+            {
+              "name": "Error - Patient Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"statusCode\": 404,\n  \"message\": \"Patient not found\",\n  \"error\": \"Not Found\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Appointment Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"}
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/secretary/appointments/{{appointmentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["secretary", "appointments", "{{appointmentId}}"]
+            },
+            "description": "Get appointment details"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440500\",\n  \"appointmentDate\": \"2024-01-20\",\n  \"appointmentTime\": \"10:00\",\n  \"status\": \"PENDING\",\n  \"patient\": {\n    \"user\": {\n      \"fullName\": \"Ahmed Mohamed\",\n      \"phoneNumber\": \"01012345678\"\n    }\n  },\n  \"serviceType\": {\n    \"name\": {\"ar\": \"كشف أول\", \"en\": \"First Visit\"},\n    \"price\": 300\n  },\n  \"paymentStatus\": \"PENDING\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Appointment Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"CONFIRMED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/secretary/appointments/{{appointmentId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["secretary", "appointments", "{{appointmentId}}", "status"]
+            },
+            "description": "Update appointment status"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440500\",\n  \"status\": \"CONFIRMED\",\n  \"updatedAt\": \"2024-01-15T11:00:00.000Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Payment Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{accessToken}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentStatus\": \"PAID\",\n  \"paymentMethod\": \"CASH\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/secretary/appointments/{{appointmentId}}/payment",
+              "host": ["{{baseUrl}}"],
+              "path": ["secretary", "appointments", "{{appointmentId}}", "payment"]
+            },
+            "description": "Update payment status"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": \"550e8400-e29b-41d4-a716-446655440500\",\n  \"paymentStatus\": \"PAID\",\n  \"paymentMethod\": \"CASH\",\n  \"paidAt\": \"2024-01-20T10:30:00.000Z\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
