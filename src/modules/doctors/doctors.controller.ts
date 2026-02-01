@@ -15,6 +15,7 @@ import {
   CreateDoctorProfileDto,
   UpdateDoctorProfileDto,
   DoctorSearchDto,
+  AdminDoctorSearchDto,
 } from './dto';
 import { Public, Roles, CurrentUser } from '../../common/decorators';
 import { RolesGuard } from '../../common/guards';
@@ -83,9 +84,14 @@ export class DoctorsController {
 export class AdminDoctorsController {
   constructor(private readonly doctorsService: DoctorsService) {}
 
-  @Get('pending')
-  getPendingDoctors() {
-    return this.doctorsService.getPendingDoctors();
+  @Get()
+  findAllDoctors(@Query() searchDto: AdminDoctorSearchDto) {
+    return this.doctorsService.findAllForAdmin(searchDto);
+  }
+
+  @Get(':id')
+  findOneDoctor(@Param('id', ParseUUIDPipe) id: string) {
+    return this.doctorsService.findById(id);
   }
 
   @Patch(':id/approve')

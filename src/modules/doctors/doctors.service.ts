@@ -4,6 +4,7 @@ import {
   CreateDoctorProfileDto,
   UpdateDoctorProfileDto,
   DoctorSearchDto,
+  AdminDoctorSearchDto,
 } from './dto';
 import { DoctorProfile, DoctorStatus } from '@prisma/client';
 import { PaginatedResult } from '../../common/interfaces';
@@ -271,23 +272,115 @@ export class DoctorsService {
   }
 
   // Admin functions
-  async getPendingDoctors(): Promise<DoctorProfile[]> {
-    return this.prisma.doctorProfile.findMany({
-      where: { status: DoctorStatus.PENDING },
-      include: {
-        user: {
-          select: {
-            id: true,
-            fullName: true,
-            email: true,
-            phoneNumber: true,
-            createdAt: true,
+  async findAllForAdmin(searchDto: AdminDoctorSearchDto): Promise<PaginatedResult<any>> {
+    const {
+      page = 1,
+      limit = 30,
+      status,
+      specialtyId,
+      cityId,
+      stateId,
+      search,
+      minRating,
+      isActive,
+      isApproved,
+    } = searchDto;
+    const skip = (page - 1) * limit;
+
+    // Build where clause - no status filter by default (get all)
+    const where: any = {};
+
+    if (status) {
+      where.status = status;
+    }
+
+    if (specialtyId) {
+      where.specialtyId = specialtyId;
+    }
+
+    if (minRating !== undefined) {
+      where.averageRating = { gte: minRating };
+    }
+
+    // User filters
+    const userFilter: any = {};
+    if (isActive !== undefined) {
+      userFilter.isActive = isActive;
+    }
+    if (isApproved !== undefined) {
+      userFilter.isApproved = isApproved;
+    }
+    if (search) {
+      userFilter.OR = [
+        { fullName: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+        { phoneNumber: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+    if (Object.keys(userFilter).length > 0) {
+      where.user = userFilter;
+    }
+
+    // Location filters
+    if (cityId || stateId) {
+      const clinicFilter: any = {};
+      if (cityId) {
+        clinicFilter.cityId = cityId;
+      }
+      if (stateId) {
+        clinicFilter.city = { stateId };
+      }
+      where.clinics = { some: clinicFilter };
+    }
+
+    const [doctors, total] = await Promise.all([
+      this.prisma.doctorProfile.findMany({
+        where,
+        skip,
+        take: limit,
+        include: {
+          user: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              phoneNumber: true,
+              isActive: true,
+              isApproved: true,
+              createdAt: true,
+            },
+          },
+          specialty: true,
+          clinics: {
+            include: {
+              city: {
+                include: { state: true },
+              },
+              serviceTypes: {
+                where: { isActive: true },
+                orderBy: { price: 'asc' },
+              },
+            },
           },
         },
-        specialty: true,
+        orderBy: [{ createdAt: 'desc' }],
+      }),
+      this.prisma.doctorProfile.count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: doctors,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
       },
-      orderBy: { createdAt: 'asc' },
-    });
+    };
   }
 
   async approveDoctor(id: string, adminId: string): Promise<DoctorProfile> {
