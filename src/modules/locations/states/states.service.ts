@@ -1,11 +1,12 @@
-import {
-  Injectable,
-  NotFoundException,
-  ConflictException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma';
 import { CreateStateDto, UpdateStateDto } from './dto';
 import { State } from '@prisma/client';
+import {
+  ErrorMessages,
+  BilingualNotFoundException,
+  BilingualConflictException,
+} from '../../../common';
 
 @Injectable()
 export class StatesService {
@@ -18,7 +19,7 @@ export class StatesService {
     });
 
     if (existing) {
-      throw new ConflictException('State code already exists');
+      throw new BilingualConflictException(ErrorMessages.STATE_CODE_EXISTS);
     }
 
     return this.prisma.state.create({
@@ -46,7 +47,7 @@ export class StatesService {
     });
 
     if (!state) {
-      throw new NotFoundException('State not found');
+      throw new BilingualNotFoundException(ErrorMessages.STATE_NOT_FOUND);
     }
 
     return state;
@@ -58,7 +59,7 @@ export class StatesService {
     });
 
     if (!state) {
-      throw new NotFoundException('State not found');
+      throw new BilingualNotFoundException(ErrorMessages.STATE_NOT_FOUND);
     }
 
     return state;
@@ -73,7 +74,7 @@ export class StatesService {
       });
 
       if (existing) {
-        throw new ConflictException('State code already exists');
+        throw new BilingualConflictException(ErrorMessages.STATE_CODE_EXISTS);
       }
     }
 

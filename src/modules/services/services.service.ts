@@ -1,12 +1,13 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma';
 import { CreateServiceTypeDto, UpdateServiceTypeDto } from './dto';
 import { ClinicServiceType, ServiceType } from '@prisma/client';
+import {
+  ErrorMessages,
+  BilingualNotFoundException,
+  BilingualForbiddenException,
+  BilingualBadRequestException,
+} from '../../common';
 
 @Injectable()
 export class ServicesService {
@@ -31,9 +32,7 @@ export class ServicesService {
     });
 
     if (existing) {
-      throw new BadRequestException(
-        `Service type ${createDto.serviceType} already exists for this clinic`,
-      );
+      throw new BilingualBadRequestException(ErrorMessages.SERVICE_EXISTS);
     }
 
     return this.prisma.clinicServiceType.create({
@@ -79,7 +78,7 @@ export class ServicesService {
     });
 
     if (!serviceType) {
-      throw new NotFoundException('Service type not found');
+      throw new BilingualNotFoundException(ErrorMessages.SERVICE_NOT_FOUND);
     }
 
     return serviceType;
@@ -109,9 +108,7 @@ export class ServicesService {
       });
 
       if (existing) {
-        throw new BadRequestException(
-          `Service type ${updateDto.serviceType} already exists for this clinic`,
-        );
+        throw new BilingualBadRequestException(ErrorMessages.SERVICE_EXISTS);
       }
     }
 
@@ -140,9 +137,7 @@ export class ServicesService {
     });
 
     if (appointmentsCount > 0) {
-      throw new ForbiddenException(
-        'Cannot delete service type with pending or confirmed appointments',
-      );
+      throw new BilingualForbiddenException(ErrorMessages.CANNOT_DELETE_SERVICE);
     }
 
     await this.prisma.clinicServiceType.delete({
@@ -171,7 +166,7 @@ export class ServicesService {
     });
 
     if (!doctorProfile) {
-      throw new NotFoundException('Doctor profile not found');
+      throw new BilingualNotFoundException(ErrorMessages.DOCTOR_PROFILE_NOT_FOUND);
     }
 
     const clinic = await this.prisma.clinic.findUnique({
@@ -179,11 +174,11 @@ export class ServicesService {
     });
 
     if (!clinic) {
-      throw new NotFoundException('Clinic not found');
+      throw new BilingualNotFoundException(ErrorMessages.CLINIC_NOT_FOUND);
     }
 
     if (clinic.doctorProfileId !== doctorProfile.id) {
-      throw new ForbiddenException('You do not own this clinic');
+      throw new BilingualForbiddenException(ErrorMessages.CLINIC_NOT_OWNED);
     }
 
     return doctorProfile;
@@ -198,7 +193,7 @@ export class ServicesService {
     });
 
     if (!serviceType) {
-      throw new NotFoundException('Service type not found');
+      throw new BilingualNotFoundException(ErrorMessages.SERVICE_NOT_FOUND);
     }
 
     if (serviceType.clinicId) {

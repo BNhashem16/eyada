@@ -1,13 +1,14 @@
-import {
-  Injectable,
-  ConflictException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma';
 import { CreateUserDto, UpdateUserDto } from './dto';
 import { hashPassword } from '../../common/utils';
 import { Role } from '../../common/enums';
 import { User } from '@prisma/client';
+import {
+  ErrorMessages,
+  BilingualConflictException,
+  BilingualNotFoundException,
+} from '../../common';
 
 @Injectable()
 export class UsersService {
@@ -27,9 +28,9 @@ export class UsersService {
 
     if (existingUser) {
       if (existingUser.email === email) {
-        throw new ConflictException('Email already registered');
+        throw new BilingualConflictException(ErrorMessages.EMAIL_ALREADY_REGISTERED);
       }
-      throw new ConflictException('Phone number already registered');
+      throw new BilingualConflictException(ErrorMessages.PHONE_ALREADY_REGISTERED);
     }
 
     const passwordHash = await hashPassword(password);
@@ -87,7 +88,7 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new BilingualNotFoundException(ErrorMessages.USER_NOT_FOUND);
     }
 
     const updatedUser = await this.prisma.user.update({

@@ -1,7 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma';
 import { CreateSpecialtyDto, UpdateSpecialtyDto } from './dto';
 import { Specialty } from '@prisma/client';
+import {
+  ErrorMessages,
+  BilingualNotFoundException,
+} from '../../common';
 
 @Injectable()
 export class SpecialtiesService {
@@ -34,7 +38,7 @@ export class SpecialtiesService {
     });
 
     if (!specialty) {
-      throw new NotFoundException('Specialty not found');
+      throw new BilingualNotFoundException(ErrorMessages.SPECIALTY_NOT_FOUND);
     }
 
     return specialty;

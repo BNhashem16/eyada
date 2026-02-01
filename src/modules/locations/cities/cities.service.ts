@@ -1,7 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma';
 import { CreateCityDto, UpdateCityDto } from './dto';
 import { City } from '@prisma/client';
+import {
+  ErrorMessages,
+  BilingualNotFoundException,
+} from '../../../common';
 
 @Injectable()
 export class CitiesService {
@@ -14,7 +18,7 @@ export class CitiesService {
     });
 
     if (!state) {
-      throw new NotFoundException('State not found');
+      throw new BilingualNotFoundException(ErrorMessages.STATE_NOT_FOUND);
     }
 
     return this.prisma.city.create({
@@ -52,7 +56,7 @@ export class CitiesService {
     });
 
     if (!city) {
-      throw new NotFoundException('City not found');
+      throw new BilingualNotFoundException(ErrorMessages.CITY_NOT_FOUND);
     }
 
     return city;
@@ -67,7 +71,7 @@ export class CitiesService {
       });
 
       if (!state) {
-        throw new NotFoundException('State not found');
+        throw new BilingualNotFoundException(ErrorMessages.STATE_NOT_FOUND);
       }
     }
 

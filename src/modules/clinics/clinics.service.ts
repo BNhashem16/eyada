@@ -1,14 +1,14 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-  HttpException,
-  HttpStatus,
-} from '@nestjs/common';
+import { Injectable, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../../prisma';
 import { CreateClinicDto, UpdateClinicDto, ClinicSearchDto } from './dto';
 import { Clinic } from '@prisma/client';
 import { PaginatedResult } from '../../common/interfaces';
+import {
+  ErrorMessages,
+  BilingualNotFoundException,
+  BilingualForbiddenException,
+  BilingualHttpException,
+} from '../../common';
 
 @Injectable()
 export class ClinicsService {
@@ -24,13 +24,9 @@ export class ClinicsService {
     });
 
     if (!doctorProfile) {
-      throw new HttpException(
-        {
-          message: 'Please complete your doctor profile first before managing clinics',
-          error: 'Profile Incomplete',
-          errorCode: 'DOCTOR_PROFILE_INCOMPLETE',
-        },
-        HttpStatus.FORBIDDEN,
+      throw new BilingualForbiddenException(
+        ErrorMessages.DOCTOR_PROFILE_INCOMPLETE,
+        'DOCTOR_PROFILE_INCOMPLETE',
       );
     }
 
@@ -62,13 +58,9 @@ export class ClinicsService {
     });
 
     if (!doctorProfile) {
-      throw new HttpException(
-        {
-          message: 'Please complete your doctor profile first before managing clinics',
-          error: 'Profile Incomplete',
-          errorCode: 'DOCTOR_PROFILE_INCOMPLETE',
-        },
-        HttpStatus.FORBIDDEN,
+      throw new BilingualForbiddenException(
+        ErrorMessages.DOCTOR_PROFILE_INCOMPLETE,
+        'DOCTOR_PROFILE_INCOMPLETE',
       );
     }
 
@@ -119,7 +111,7 @@ export class ClinicsService {
     });
 
     if (!clinic) {
-      throw new NotFoundException('Clinic not found');
+      throw new BilingualNotFoundException(ErrorMessages.CLINIC_NOT_FOUND);
     }
 
     return clinic;
@@ -167,9 +159,7 @@ export class ClinicsService {
     });
 
     if (futureAppointments > 0) {
-      throw new ForbiddenException(
-        'Cannot delete clinic with pending or confirmed appointments',
-      );
+      throw new BilingualForbiddenException(ErrorMessages.CANNOT_DELETE_CLINIC);
     }
 
     await this.prisma.clinic.delete({
@@ -374,13 +364,9 @@ export class ClinicsService {
     });
 
     if (!doctorProfile) {
-      throw new HttpException(
-        {
-          message: 'Please complete your doctor profile first before managing clinics',
-          error: 'Profile Incomplete',
-          errorCode: 'DOCTOR_PROFILE_INCOMPLETE',
-        },
-        HttpStatus.FORBIDDEN,
+      throw new BilingualForbiddenException(
+        ErrorMessages.DOCTOR_PROFILE_INCOMPLETE,
+        'DOCTOR_PROFILE_INCOMPLETE',
       );
     }
 
@@ -389,11 +375,11 @@ export class ClinicsService {
     });
 
     if (!clinic) {
-      throw new NotFoundException('Clinic not found');
+      throw new BilingualNotFoundException(ErrorMessages.CLINIC_NOT_FOUND);
     }
 
     if (clinic.doctorProfileId !== doctorProfile.id) {
-      throw new ForbiddenException('You do not own this clinic');
+      throw new BilingualForbiddenException(ErrorMessages.CLINIC_NOT_OWNED);
     }
 
     return clinic;

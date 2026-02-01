@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma';
 import {
   CreatePatientProfileDto,
@@ -12,6 +8,11 @@ import {
 import { PatientProfile, RelationshipType } from '@prisma/client';
 import { encrypt, decrypt, encryptJson, decryptJson } from '../../common/utils';
 import { ConfigService } from '@nestjs/config';
+import {
+  ErrorMessages,
+  BilingualBadRequestException,
+  BilingualNotFoundException,
+} from '../../common';
 
 @Injectable()
 export class PatientsService {
@@ -34,7 +35,7 @@ export class PatientsService {
     });
 
     if (existing) {
-      throw new BadRequestException('Patient profile already exists');
+      throw new BilingualBadRequestException(ErrorMessages.PATIENT_PROFILE_EXISTS);
     }
 
     return this.prisma.patientProfile.create({
@@ -100,7 +101,7 @@ export class PatientsService {
     });
 
     if (!profile) {
-      throw new NotFoundException('Patient profile not found');
+      throw new BilingualNotFoundException(ErrorMessages.PATIENT_PROFILE_NOT_FOUND);
     }
 
     return this.prisma.patientProfile.update({
@@ -127,7 +128,7 @@ export class PatientsService {
     });
 
     if (!profile) {
-      throw new NotFoundException('Patient profile not found');
+      throw new BilingualNotFoundException(ErrorMessages.PATIENT_PROFILE_NOT_FOUND);
     }
 
     const updateData: any = {};
@@ -161,7 +162,7 @@ export class PatientsService {
     });
 
     if (!profile) {
-      throw new NotFoundException('Patient profile not found');
+      throw new BilingualNotFoundException(ErrorMessages.PATIENT_PROFILE_NOT_FOUND);
     }
 
     return {
@@ -187,7 +188,7 @@ export class PatientsService {
     });
 
     if (!headProfile) {
-      throw new NotFoundException('Your patient profile not found');
+      throw new BilingualNotFoundException(ErrorMessages.YOUR_PATIENT_PROFILE_NOT_FOUND);
     }
 
     // Create a new user for the family member (without login credentials)
@@ -232,7 +233,7 @@ export class PatientsService {
     });
 
     if (!headProfile) {
-      throw new NotFoundException('Patient profile not found');
+      throw new BilingualNotFoundException(ErrorMessages.PATIENT_PROFILE_NOT_FOUND);
     }
 
     return this.prisma.patientProfile.findMany({
@@ -257,7 +258,7 @@ export class PatientsService {
     });
 
     if (!headProfile) {
-      throw new NotFoundException('Your patient profile not found');
+      throw new BilingualNotFoundException(ErrorMessages.YOUR_PATIENT_PROFILE_NOT_FOUND);
     }
 
     const familyMember = await this.prisma.patientProfile.findFirst({
@@ -268,7 +269,7 @@ export class PatientsService {
     });
 
     if (!familyMember) {
-      throw new NotFoundException('Family member not found');
+      throw new BilingualNotFoundException(ErrorMessages.FAMILY_MEMBER_NOT_FOUND);
     }
 
     // Delete the user and profile (cascade will handle profile)

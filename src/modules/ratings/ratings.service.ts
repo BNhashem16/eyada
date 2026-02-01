@@ -1,12 +1,13 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma';
 import { CreateRatingDto } from './dto';
 import { Rating } from '@prisma/client';
+import {
+  ErrorMessages,
+  BilingualNotFoundException,
+  BilingualForbiddenException,
+  BilingualBadRequestException,
+} from '../../common';
 
 @Injectable()
 export class RatingsService {
@@ -23,7 +24,7 @@ export class RatingsService {
     });
 
     if (!patientProfile) {
-      throw new NotFoundException('Patient profile not found');
+      throw new BilingualNotFoundException(ErrorMessages.PATIENT_PROFILE_NOT_FOUND);
     }
 
     // Get appointment
@@ -37,7 +38,7 @@ export class RatingsService {
     });
 
     if (!appointment) {
-      throw new NotFoundException('Appointment not found');
+      throw new BilingualNotFoundException(ErrorMessages.APPOINTMENT_NOT_FOUND);
     }
 
     // Verify the patient owns this appointment
@@ -47,12 +48,12 @@ export class RatingsService {
     ];
 
     if (!authorizedPatientIds.includes(appointment.bookedForPatientId)) {
-      throw new ForbiddenException('You cannot rate this appointment');
+      throw new BilingualForbiddenException(ErrorMessages.CANNOT_RATE_APPOINTMENT);
     }
 
     // Check if appointment is completed
     if (appointment.status !== 'COMPLETED') {
-      throw new BadRequestException('Can only rate completed appointments');
+      throw new BilingualBadRequestException(ErrorMessages.CAN_ONLY_RATE_COMPLETED);
     }
 
     // Check if already rated
@@ -61,7 +62,7 @@ export class RatingsService {
     });
 
     if (existingRating) {
-      throw new BadRequestException('You have already rated this appointment');
+      throw new BilingualBadRequestException(ErrorMessages.ALREADY_RATED);
     }
 
     // Create rating
@@ -166,7 +167,7 @@ export class RatingsService {
     });
 
     if (!doctorProfile) {
-      throw new NotFoundException('Doctor profile not found');
+      throw new BilingualNotFoundException(ErrorMessages.DOCTOR_PROFILE_NOT_FOUND);
     }
 
     return this.findByDoctor(doctorProfile.id);

@@ -20,6 +20,7 @@ import {
 import { JwtAuthGuard } from '../../common/guards';
 import { Public, CurrentUser } from '../../common/decorators';
 import { JwtUserPayload } from '../../common/interfaces';
+import { ErrorMessages } from '../../common';
 
 @Controller('auth')
 export class AuthController {
@@ -58,7 +59,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async logout(@Body() refreshTokenDto: RefreshTokenDto) {
     await this.authService.logout(refreshTokenDto.refreshToken);
-    return { message: 'Logged out successfully' };
+    return { message: ErrorMessages.LOGGED_OUT };
   }
 
   @UseGuards(JwtAuthGuard)
@@ -66,7 +67,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async logoutAll(@CurrentUser() user: JwtUserPayload) {
     await this.authService.logoutAll(user.id);
-    return { message: 'Logged out from all devices' };
+    return { message: ErrorMessages.LOGGED_OUT_ALL };
   }
 
   @UseGuards(JwtAuthGuard)
@@ -77,7 +78,7 @@ export class AuthController {
     @Body() changePasswordDto: ChangePasswordDto,
   ) {
     await this.authService.changePassword(user.id, changePasswordDto);
-    return { message: 'Password changed successfully' };
+    return { message: ErrorMessages.PASSWORD_CHANGED };
   }
 
   @UseGuards(JwtAuthGuard)

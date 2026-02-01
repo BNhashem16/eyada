@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  UnauthorizedException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma';
@@ -15,6 +11,11 @@ import {
 } from './dto';
 import { comparePassword } from '../../common/utils';
 import { JwtPayload } from '../../common/interfaces';
+import {
+  ErrorMessages,
+  BilingualBadRequestException,
+  BilingualUnauthorizedException,
+} from '../../common';
 import { v4 as uuidv4 } from 'uuid';
 import { Role } from '../../common/enums';
 
@@ -48,7 +49,7 @@ export class AuthService {
       registerDto.role !== Role.PATIENT &&
       registerDto.role !== Role.DOCTOR
     ) {
-      throw new BadRequestException('Invalid role for registration');
+      throw new BilingualBadRequestException(ErrorMessages.INVALID_ROLE_REGISTRATION);
     }
 
     const user = await this.usersService.create({
@@ -83,22 +84,22 @@ export class AuthService {
     const user = await this.usersService.findByEmail(email);
 
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new BilingualUnauthorizedException(ErrorMessages.INVALID_CREDENTIALS);
     }
 
     if (!user.isActive) {
-      throw new UnauthorizedException('Account is deactivated');
+      throw new BilingualUnauthorizedException(ErrorMessages.ACCOUNT_DEACTIVATED);
     }
 
     const isPasswordValid = await comparePassword(password, user.passwordHash);
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new BilingualUnauthorizedException(ErrorMessages.INVALID_CREDENTIALS);
     }
 
     // For doctors, check if approved
     if (user.role === 'DOCTOR' && !user.isApproved) {
-      throw new UnauthorizedException('Your account is pending approval');
+      throw new BilingualUnauthorizedException(ErrorMessages.ACCOUNT_PENDING_APPROVAL);
     }
 
     // Update last login
@@ -133,19 +134,19 @@ export class AuthService {
     });
 
     if (!storedToken) {
-      throw new UnauthorizedException('Invalid refresh token');
+      throw new BilingualUnauthorizedException(ErrorMessages.INVALID_REFRESH_TOKEN);
     }
 
     if (storedToken.revokedAt) {
-      throw new UnauthorizedException('Refresh token has been revoked');
+      throw new BilingualUnauthorizedException(ErrorMessages.REFRESH_TOKEN_REVOKED);
     }
 
     if (new Date() > storedToken.expiresAt) {
-      throw new UnauthorizedException('Refresh token has expired');
+      throw new BilingualUnauthorizedException(ErrorMessages.REFRESH_TOKEN_EXPIRED);
     }
 
     if (!storedToken.user.isActive) {
-      throw new UnauthorizedException('Account is deactivated');
+      throw new BilingualUnauthorizedException(ErrorMessages.ACCOUNT_DEACTIVATED);
     }
 
     // Revoke old refresh token
@@ -187,7 +188,7 @@ export class AuthService {
     const user = await this.usersService.findByIdWithPassword(userId);
 
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new BilingualUnauthorizedException(ErrorMessages.USER_NOT_FOUND);
     }
 
     const isPasswordValid = await comparePassword(
@@ -196,7 +197,7 @@ export class AuthService {
     );
 
     if (!isPasswordValid) {
-      throw new BadRequestException('Current password is incorrect');
+      throw new BilingualBadRequestException(ErrorMessages.CURRENT_PASSWORD_INCORRECT);
     }
 
     await this.usersService.updatePassword(userId, newPassword);
@@ -209,7 +210,7 @@ export class AuthService {
     const user = await this.usersService.findById(userId);
 
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new BilingualUnauthorizedException(ErrorMessages.USER_NOT_FOUND);
     }
 
     return user;

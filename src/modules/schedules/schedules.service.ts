@@ -1,12 +1,13 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma';
 import { CreateScheduleDto, UpdateScheduleDto } from './dto';
 import { ClinicSchedule, DayOfWeek } from '@prisma/client';
+import {
+  ErrorMessages,
+  BilingualNotFoundException,
+  BilingualForbiddenException,
+  BilingualBadRequestException,
+} from '../../common';
 
 export interface Shift {
   startTime: string;
@@ -39,9 +40,7 @@ export class SchedulesService {
     });
 
     if (existingSchedule) {
-      throw new BadRequestException(
-        'Schedule already exists for this day. Use update instead.',
-      );
+      throw new BilingualBadRequestException(ErrorMessages.SCHEDULE_EXISTS);
     }
 
     // Validate shifts
@@ -55,7 +54,7 @@ export class SchedulesService {
         shift.endTime &&
         shift.startTime >= shift.endTime
       ) {
-        throw new BadRequestException('Start time must be before end time');
+        throw new BilingualBadRequestException(ErrorMessages.START_BEFORE_END);
       }
     }
 
@@ -91,7 +90,7 @@ export class SchedulesService {
     if (updateDto.shifts) {
       for (const shift of updateDto.shifts) {
         if (shift.startTime >= shift.endTime) {
-          throw new BadRequestException('Start time must be before end time');
+          throw new BilingualBadRequestException(ErrorMessages.START_BEFORE_END);
         }
       }
     }
@@ -125,7 +124,7 @@ export class SchedulesService {
     });
 
     if (!clinic) {
-      throw new NotFoundException('Clinic not found');
+      throw new BilingualNotFoundException(ErrorMessages.CLINIC_NOT_FOUND);
     }
 
     // Get day of week from date
@@ -235,7 +234,7 @@ export class SchedulesService {
     });
 
     if (!doctorProfile) {
-      throw new NotFoundException('Doctor profile not found');
+      throw new BilingualNotFoundException(ErrorMessages.DOCTOR_PROFILE_NOT_FOUND);
     }
 
     const clinic = await this.prisma.clinic.findUnique({
@@ -243,11 +242,11 @@ export class SchedulesService {
     });
 
     if (!clinic) {
-      throw new NotFoundException('Clinic not found');
+      throw new BilingualNotFoundException(ErrorMessages.CLINIC_NOT_FOUND);
     }
 
     if (clinic.doctorProfileId !== doctorProfile.id) {
-      throw new ForbiddenException('You do not own this clinic');
+      throw new BilingualForbiddenException(ErrorMessages.CLINIC_NOT_OWNED);
     }
   }
 
@@ -261,7 +260,7 @@ export class SchedulesService {
     });
 
     if (!schedule) {
-      throw new NotFoundException('Schedule not found');
+      throw new BilingualNotFoundException(ErrorMessages.SCHEDULE_NOT_FOUND);
     }
 
     await this.verifyClinicOwnership(doctorUserId, schedule.clinicId);

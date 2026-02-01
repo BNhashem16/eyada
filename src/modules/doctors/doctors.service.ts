@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../../prisma';
 import {
   CreateDoctorProfileDto,
@@ -12,6 +7,12 @@ import {
 } from './dto';
 import { DoctorProfile, DoctorStatus } from '@prisma/client';
 import { PaginatedResult } from '../../common/interfaces';
+import {
+  ErrorMessages,
+  BilingualBadRequestException,
+  BilingualNotFoundException,
+  BilingualHttpException,
+} from '../../common';
 
 @Injectable()
 export class DoctorsService {
@@ -27,7 +28,7 @@ export class DoctorsService {
     });
 
     if (existing) {
-      throw new BadRequestException('Doctor profile already exists');
+      throw new BilingualBadRequestException(ErrorMessages.DOCTOR_PROFILE_EXISTS);
     }
 
     // Verify specialty exists
@@ -36,7 +37,7 @@ export class DoctorsService {
     });
 
     if (!specialty) {
-      throw new NotFoundException('Specialty not found');
+      throw new BilingualNotFoundException(ErrorMessages.SPECIALTY_NOT_FOUND);
     }
 
     return this.prisma.doctorProfile.create({
@@ -209,7 +210,7 @@ export class DoctorsService {
     });
 
     if (!doctor) {
-      throw new NotFoundException('Doctor not found');
+      throw new BilingualNotFoundException(ErrorMessages.DOCTOR_NOT_FOUND);
     }
 
     return doctor;
@@ -240,7 +241,7 @@ export class DoctorsService {
     });
 
     if (!profile) {
-      throw new NotFoundException('Doctor profile not found');
+      throw new BilingualNotFoundException(ErrorMessages.DOCTOR_PROFILE_NOT_FOUND);
     }
 
     if (updateDto.specialtyId) {
@@ -249,7 +250,7 @@ export class DoctorsService {
       });
 
       if (!specialty) {
-        throw new NotFoundException('Specialty not found');
+        throw new BilingualNotFoundException(ErrorMessages.SPECIALTY_NOT_FOUND);
       }
     }
 
@@ -296,11 +297,11 @@ export class DoctorsService {
     });
 
     if (!profile) {
-      throw new NotFoundException('Doctor not found');
+      throw new BilingualNotFoundException(ErrorMessages.DOCTOR_NOT_FOUND);
     }
 
     if (profile.status !== DoctorStatus.PENDING) {
-      throw new BadRequestException('Doctor is not in pending status');
+      throw new BilingualBadRequestException(ErrorMessages.DOCTOR_NOT_PENDING);
     }
 
     // Update both the profile and user
@@ -328,7 +329,7 @@ export class DoctorsService {
     });
 
     if (!profile) {
-      throw new NotFoundException('Doctor not found');
+      throw new BilingualNotFoundException(ErrorMessages.DOCTOR_NOT_FOUND);
     }
 
     return this.prisma.doctorProfile.update({
@@ -344,7 +345,7 @@ export class DoctorsService {
     });
 
     if (!profile) {
-      throw new NotFoundException('Doctor not found');
+      throw new BilingualNotFoundException(ErrorMessages.DOCTOR_NOT_FOUND);
     }
 
     const [updatedProfile] = await this.prisma.$transaction([

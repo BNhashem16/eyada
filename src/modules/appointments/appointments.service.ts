@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -23,6 +18,13 @@ import {
   DayOfWeek,
 } from '@prisma/client';
 import { encrypt, decrypt } from '../../common/utils';
+import {
+  ErrorMessages,
+  formatMessage,
+  BilingualNotFoundException,
+  BilingualForbiddenException,
+  BilingualBadRequestException,
+} from '../../common';
 
 @Injectable()
 export class AppointmentsService {
@@ -47,9 +49,7 @@ export class AppointmentsService {
     });
 
     if (!patientProfile) {
-      throw new NotFoundException(
-        'Patient profile not found. Please create your profile first.',
-      );
+      throw new BilingualNotFoundException(ErrorMessages.PATIENT_PROFILE_NOT_FOUND);
     }
 
     // Determine which profile to book for (self or family member)
@@ -68,9 +68,7 @@ export class AppointmentsService {
       });
 
       if (!familyMember) {
-        throw new ForbiddenException(
-          'Cannot book for this patient. They are not in your family.',
-        );
+        throw new BilingualForbiddenException(ErrorMessages.CANNOT_BOOK_FOR_PATIENT);
       }
       bookingForPatientId = familyMember.id;
       patientName = familyMember.user.fullName;
@@ -87,11 +85,11 @@ export class AppointmentsService {
     });
 
     if (!clinic || !clinic.isActive) {
-      throw new NotFoundException('Clinic not found or not active');
+      throw new BilingualNotFoundException(ErrorMessages.CLINIC_NOT_ACTIVE);
     }
 
     if (clinic.doctorProfile.status !== 'APPROVED') {
-      throw new BadRequestException('Doctor is not available for appointments');
+      throw new BilingualBadRequestException(ErrorMessages.DOCTOR_NOT_AVAILABLE);
     }
 
     // Get service type
@@ -104,7 +102,7 @@ export class AppointmentsService {
     });
 
     if (!serviceType) {
-      throw new NotFoundException('Service type not found or not active');
+      throw new BilingualNotFoundException(ErrorMessages.SERVICE_NOT_ACTIVE);
     }
 
     // Validate appointment date and time
@@ -115,7 +113,7 @@ export class AppointmentsService {
     today.setHours(0, 0, 0, 0);
 
     if (appointmentDate < today) {
-      throw new BadRequestException('Cannot book appointments in the past');
+      throw new BilingualBadRequestException(ErrorMessages.CANNOT_BOOK_PAST);
     }
 
     // Check if the day is a working day
@@ -125,7 +123,7 @@ export class AppointmentsService {
     );
 
     if (daySchedules.length === 0) {
-      throw new BadRequestException('Clinic is not open on this day');
+      throw new BilingualBadRequestException(ErrorMessages.CLINIC_NOT_OPEN);
     }
 
     // Check for existing appointment at this time
@@ -139,7 +137,7 @@ export class AppointmentsService {
     });
 
     if (existingAppointment) {
-      throw new BadRequestException('This time slot is already booked');
+      throw new BilingualBadRequestException(ErrorMessages.TIME_SLOT_BOOKED);
     }
 
     // Get queue number for the day
@@ -236,7 +234,7 @@ export class AppointmentsService {
     });
 
     if (!patientProfile) {
-      throw new NotFoundException('Patient profile not found');
+      throw new BilingualNotFoundException(ErrorMessages.PATIENT_PROFILE_NOT_FOUND);
     }
 
     // Determine which patient IDs to include
@@ -381,7 +379,7 @@ export class AppointmentsService {
     });
 
     if (!doctorProfile) {
-      throw new NotFoundException('Doctor profile not found');
+      throw new BilingualNotFoundException(ErrorMessages.DOCTOR_PROFILE_NOT_FOUND);
     }
 
     const clinicIds = doctorProfile.clinics.map((c) => c.id);
@@ -393,7 +391,7 @@ export class AppointmentsService {
     // Filter by specific clinic
     if (clinicId) {
       if (!clinicIds.includes(clinicId)) {
-        throw new ForbiddenException('You do not own this clinic');
+        throw new BilingualForbiddenException(ErrorMessages.CLINIC_NOT_OWNED);
       }
       where.clinicId = clinicId;
     }
@@ -533,7 +531,7 @@ export class AppointmentsService {
     });
 
     if (!appointment) {
-      throw new NotFoundException('Appointment not found');
+      throw new BilingualNotFoundException(ErrorMessages.APPOINTMENT_NOT_FOUND);
     }
 
     return appointment;
@@ -554,7 +552,7 @@ export class AppointmentsService {
     });
 
     if (!patientProfile) {
-      throw new NotFoundException('Patient profile not found');
+      throw new BilingualNotFoundException(ErrorMessages.PATIENT_PROFILE_NOT_FOUND);
     }
 
     const authorizedPatientIds = [
@@ -563,13 +561,11 @@ export class AppointmentsService {
     ];
 
     if (!authorizedPatientIds.includes(appointment.bookedForPatientId)) {
-      throw new ForbiddenException('You cannot cancel this appointment');
+      throw new BilingualForbiddenException(ErrorMessages.CANNOT_CANCEL_THIS_APPOINTMENT);
     }
 
     if (!['PENDING', 'CONFIRMED'].includes(appointment.status)) {
-      throw new BadRequestException(
-        'Can only cancel pending or confirmed appointments',
-      );
+      throw new BilingualBadRequestException(ErrorMessages.CANNOT_CANCEL_APPOINTMENT);
     }
 
     return this.prisma.appointment.update({
@@ -612,8 +608,11 @@ export class AppointmentsService {
     const newStatus = updateDto.status as AppointmentStatus;
 
     if (!validTransitions[currentStatus]?.includes(newStatus)) {
-      throw new BadRequestException(
-        `Cannot transition from ${currentStatus} to ${newStatus}`,
+      throw new BilingualBadRequestException(
+        formatMessage(ErrorMessages.INVALID_STATUS_TRANSITION, {
+          currentStatus,
+          newStatus,
+        }),
       );
     }
 
@@ -666,9 +665,7 @@ export class AppointmentsService {
       appointment.status !== 'CHECKED_IN' &&
       appointment.status !== 'COMPLETED'
     ) {
-      throw new BadRequestException(
-        'Can only update medical notes for checked-in or completed appointments',
-      );
+      throw new BilingualBadRequestException(ErrorMessages.MEDICAL_NOTES_INVALID_STATUS);
     }
 
     const updateData: any = {};
@@ -722,7 +719,7 @@ export class AppointmentsService {
       });
 
       if (!patientProfile) {
-        throw new NotFoundException('Patient profile not found');
+        throw new BilingualNotFoundException(ErrorMessages.PATIENT_PROFILE_NOT_FOUND);
       }
 
       const authorizedPatientIds = [
@@ -731,7 +728,7 @@ export class AppointmentsService {
       ];
 
       if (!authorizedPatientIds.includes(appointment.bookedForPatientId)) {
-        throw new ForbiddenException('You cannot view this appointment');
+        throw new BilingualForbiddenException(ErrorMessages.CANNOT_VIEW_APPOINTMENT);
       }
     }
 
@@ -782,7 +779,7 @@ export class AppointmentsService {
     });
 
     if (!patientProfile) {
-      throw new NotFoundException('Patient profile not found');
+      throw new BilingualNotFoundException(ErrorMessages.PATIENT_PROFILE_NOT_FOUND);
     }
 
     // Get clinic with doctor info
@@ -795,11 +792,11 @@ export class AppointmentsService {
     });
 
     if (!clinic || !clinic.isActive) {
-      throw new NotFoundException('Clinic not found or not active');
+      throw new BilingualNotFoundException(ErrorMessages.CLINIC_NOT_ACTIVE);
     }
 
     if (clinic.doctorProfile.status !== 'APPROVED') {
-      throw new BadRequestException('Doctor is not available for appointments');
+      throw new BilingualBadRequestException(ErrorMessages.DOCTOR_NOT_AVAILABLE);
     }
 
     // Get service type
@@ -812,7 +809,7 @@ export class AppointmentsService {
     });
 
     if (!serviceType) {
-      throw new NotFoundException('Service type not found or not active');
+      throw new BilingualNotFoundException(ErrorMessages.SERVICE_NOT_ACTIVE);
     }
 
     // Validate appointment date and time
@@ -823,7 +820,7 @@ export class AppointmentsService {
     today.setHours(0, 0, 0, 0);
 
     if (appointmentDate < today) {
-      throw new BadRequestException('Cannot book appointments in the past');
+      throw new BilingualBadRequestException(ErrorMessages.CANNOT_BOOK_PAST);
     }
 
     // Check if the day is a working day
@@ -833,7 +830,7 @@ export class AppointmentsService {
     );
 
     if (daySchedules.length === 0) {
-      throw new BadRequestException('Clinic is not open on this day');
+      throw new BilingualBadRequestException(ErrorMessages.CLINIC_NOT_OPEN);
     }
 
     // Check for existing appointment at this time
@@ -847,7 +844,7 @@ export class AppointmentsService {
     });
 
     if (existingAppointment) {
-      throw new BadRequestException('This time slot is already booked');
+      throw new BilingualBadRequestException(ErrorMessages.TIME_SLOT_BOOKED);
     }
 
     // Get queue number for the day
@@ -947,9 +944,7 @@ export class AppointmentsService {
     });
 
     if (secretaryAssignments.length === 0) {
-      throw new ForbiddenException(
-        'You are not assigned to any clinic as a secretary',
-      );
+      throw new BilingualForbiddenException(ErrorMessages.CLINIC_NO_ACCESS);
     }
 
     const clinicIds = secretaryAssignments.map((s) => s.clinicId);
@@ -961,7 +956,7 @@ export class AppointmentsService {
     // Filter by specific clinic
     if (clinicId) {
       if (!clinicIds.includes(clinicId)) {
-        throw new ForbiddenException('You do not have access to this clinic');
+        throw new BilingualForbiddenException(ErrorMessages.CLINIC_NO_ACCESS);
       }
       where.clinicId = clinicId;
     }
@@ -1130,8 +1125,11 @@ export class AppointmentsService {
     const newStatus = updateDto.status as AppointmentStatus;
 
     if (!validTransitions[currentStatus]?.includes(newStatus)) {
-      throw new BadRequestException(
-        `Secretary cannot transition from ${currentStatus} to ${newStatus}`,
+      throw new BilingualBadRequestException(
+        formatMessage(ErrorMessages.INVALID_STATUS_TRANSITION, {
+          currentStatus,
+          newStatus,
+        }),
       );
     }
 
@@ -1198,7 +1196,7 @@ export class AppointmentsService {
     });
 
     if (!secretaryAssignment) {
-      throw new ForbiddenException('You do not have access to this clinic');
+      throw new BilingualForbiddenException(ErrorMessages.CLINIC_NO_ACCESS);
     }
   }
 
@@ -1252,7 +1250,7 @@ export class AppointmentsService {
     });
 
     if (!doctorProfile) {
-      throw new NotFoundException('Doctor profile not found');
+      throw new BilingualNotFoundException(ErrorMessages.DOCTOR_PROFILE_NOT_FOUND);
     }
 
     const clinic = await this.prisma.clinic.findUnique({
@@ -1260,7 +1258,7 @@ export class AppointmentsService {
     });
 
     if (!clinic || clinic.doctorProfileId !== doctorProfile.id) {
-      throw new ForbiddenException('You do not own this clinic');
+      throw new BilingualForbiddenException(ErrorMessages.CLINIC_NOT_OWNED);
     }
   }
 }

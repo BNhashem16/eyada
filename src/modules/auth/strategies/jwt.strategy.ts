@@ -1,9 +1,13 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../../prisma';
 import { JwtPayload, JwtUserPayload } from '../../../common/interfaces';
+import {
+  ErrorMessages,
+  BilingualUnauthorizedException,
+} from '../../../common';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
@@ -31,16 +35,16 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
 
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new BilingualUnauthorizedException(ErrorMessages.USER_NOT_FOUND);
     }
 
     if (!user.isActive) {
-      throw new UnauthorizedException('Account is deactivated');
+      throw new BilingualUnauthorizedException(ErrorMessages.ACCOUNT_DEACTIVATED);
     }
 
     // For doctors, check if approved
     if (user.role === 'DOCTOR' && !user.isApproved) {
-      throw new UnauthorizedException('Doctor account pending approval');
+      throw new BilingualUnauthorizedException(ErrorMessages.DOCTOR_PENDING_APPROVAL);
     }
 
     return {
