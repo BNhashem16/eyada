@@ -9,6 +9,7 @@ import {
   ParseUUIDPipe,
   Query,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { DoctorsService } from './doctors.service';
 import {
   CreateDoctorProfileDto,
@@ -20,6 +21,7 @@ import { RolesGuard } from '../../common/guards';
 import { Role } from '../../common/enums';
 import { JwtUserPayload } from '../../common/interfaces';
 
+@ApiTags('Doctors')
 @Controller('doctors')
 export class DoctorsController {
   constructor(private readonly doctorsService: DoctorsService) {}
@@ -32,6 +34,7 @@ export class DoctorsController {
   }
 
   // Doctor - get own profile (must be before :id route)
+  @ApiBearerAuth('JWT-auth')
   @Get('profile/me')
   @UseGuards(RolesGuard)
   @Roles(Role.DOCTOR)
@@ -40,6 +43,7 @@ export class DoctorsController {
   }
 
   // Doctor - create profile (during registration completion)
+  @ApiBearerAuth('JWT-auth')
   @Post('profile')
   @UseGuards(RolesGuard)
   @Roles(Role.DOCTOR)
@@ -51,6 +55,7 @@ export class DoctorsController {
   }
 
   // Doctor - update own profile
+  @ApiBearerAuth('JWT-auth')
   @Patch('profile')
   @UseGuards(RolesGuard)
   @Roles(Role.DOCTOR)
@@ -70,6 +75,8 @@ export class DoctorsController {
 }
 
 // Admin controller for doctor management
+@ApiTags('Admin - Doctors')
+@ApiBearerAuth('JWT-auth')
 @Controller('admin/doctors')
 @UseGuards(RolesGuard)
 @Roles(Role.ADMIN)

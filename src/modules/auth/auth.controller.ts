@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { Throttle } from '@nestjs/throttler';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { AuthService, AuthResponse, AuthTokens } from './auth.service';
 import {
   RegisterDto,
@@ -22,6 +23,7 @@ import { Public, CurrentUser } from '../../common/decorators';
 import { JwtUserPayload } from '../../common/interfaces';
 import { ErrorMessages } from '../../common';
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -54,6 +56,7 @@ export class AuthController {
     return this.authService.refresh(refreshTokenDto);
   }
 
+  @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard)
   @Post('logout')
   @HttpCode(HttpStatus.OK)
@@ -62,6 +65,7 @@ export class AuthController {
     return { message: ErrorMessages.LOGGED_OUT };
   }
 
+  @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard)
   @Post('logout-all')
   @HttpCode(HttpStatus.OK)
@@ -70,6 +74,7 @@ export class AuthController {
     return { message: ErrorMessages.LOGGED_OUT_ALL };
   }
 
+  @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard)
   @Post('change-password')
   @HttpCode(HttpStatus.OK)
@@ -81,6 +86,7 @@ export class AuthController {
     return { message: ErrorMessages.PASSWORD_CHANGED };
   }
 
+  @ApiBearerAuth('JWT-auth')
   @UseGuards(JwtAuthGuard)
   @Get('me')
   async getProfile(@CurrentUser() user: JwtUserPayload) {

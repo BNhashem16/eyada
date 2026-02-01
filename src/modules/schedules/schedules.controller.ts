@@ -10,6 +10,7 @@ import {
   ParseUUIDPipe,
   Query,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { SchedulesService } from './schedules.service';
 import { CreateScheduleDto, UpdateScheduleDto } from './dto';
 import { Roles, CurrentUser, Public } from '../../common/decorators';
@@ -18,6 +19,7 @@ import { Role } from '../../common/enums';
 import { JwtUserPayload } from '../../common/interfaces';
 
 // Public endpoint for getting available slots
+@ApiTags('Clinics - Schedules')
 @Controller('clinics')
 export class SchedulesPublicController {
   constructor(private readonly schedulesService: SchedulesService) {}
@@ -43,6 +45,8 @@ export class SchedulesPublicController {
 }
 
 // Doctor management of schedules
+@ApiTags('Doctors - Schedules')
+@ApiBearerAuth('JWT-auth')
 @Controller('doctors/clinics/:clinicId/schedules')
 @UseGuards(RolesGuard)
 @Roles(Role.DOCTOR)

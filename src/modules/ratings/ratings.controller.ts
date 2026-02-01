@@ -8,6 +8,7 @@ import {
   ParseUUIDPipe,
   Query,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { RatingsService } from './ratings.service';
 import { CreateRatingDto } from './dto';
 import { Roles, CurrentUser, Public } from '../../common/decorators';
@@ -16,6 +17,7 @@ import { Role } from '../../common/enums';
 import { JwtUserPayload } from '../../common/interfaces';
 
 // Public endpoint for viewing doctor ratings
+@ApiTags('Doctors - Ratings')
 @Controller('doctors/:doctorId/ratings')
 export class RatingsPublicController {
   constructor(private readonly ratingsService: RatingsService) {}
@@ -36,6 +38,8 @@ export class RatingsPublicController {
 }
 
 // Patient endpoint for creating ratings
+@ApiTags('Patients - Ratings')
+@ApiBearerAuth('JWT-auth')
 @Controller('patients/ratings')
 @UseGuards(RolesGuard)
 @Roles(Role.PATIENT)
@@ -52,6 +56,8 @@ export class PatientRatingsController {
 }
 
 // Doctor endpoint for viewing their ratings
+@ApiTags('Doctors - Ratings')
+@ApiBearerAuth('JWT-auth')
 @Controller('doctors/ratings')
 @UseGuards(RolesGuard)
 @Roles(Role.DOCTOR)

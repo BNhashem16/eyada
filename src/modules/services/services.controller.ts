@@ -9,6 +9,7 @@ import {
   UseGuards,
   ParseUUIDPipe,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { ServicesService } from './services.service';
 import { CreateServiceTypeDto, UpdateServiceTypeDto } from './dto';
 import { Roles, CurrentUser, Public } from '../../common/decorators';
@@ -17,6 +18,7 @@ import { Role } from '../../common/enums';
 import { JwtUserPayload } from '../../common/interfaces';
 
 // Public endpoint for viewing clinic services
+@ApiTags('Clinics - Services')
 @Controller('clinics')
 export class ServicesPublicController {
   constructor(private readonly servicesService: ServicesService) {}
@@ -29,6 +31,8 @@ export class ServicesPublicController {
 }
 
 // Doctor management of services
+@ApiTags('Doctors - Services')
+@ApiBearerAuth('JWT-auth')
 @Controller('doctors/clinics/:clinicId/services')
 @UseGuards(RolesGuard)
 @Roles(Role.DOCTOR)

@@ -9,12 +9,14 @@ import {
   UseGuards,
   ParseUUIDPipe,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { SpecialtiesService } from './specialties.service';
 import { CreateSpecialtyDto, UpdateSpecialtyDto } from './dto';
 import { Public, Roles } from '../../common/decorators';
 import { RolesGuard } from '../../common/guards';
 import { Role } from '../../common/enums';
 
+@ApiTags('Specialties')
 @Controller('specialties')
 export class SpecialtiesController {
   constructor(private readonly specialtiesService: SpecialtiesService) {}
@@ -34,6 +36,7 @@ export class SpecialtiesController {
   }
 
   // Admin only - create specialty
+  @ApiBearerAuth('JWT-auth')
   @Post()
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
@@ -42,6 +45,7 @@ export class SpecialtiesController {
   }
 
   // Admin only - update specialty
+  @ApiBearerAuth('JWT-auth')
   @Patch(':id')
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
@@ -53,6 +57,7 @@ export class SpecialtiesController {
   }
 
   // Admin only - delete specialty
+  @ApiBearerAuth('JWT-auth')
   @Delete(':id')
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)

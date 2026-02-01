@@ -10,12 +10,14 @@ import {
   ParseUUIDPipe,
   Query,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { CitiesService } from './cities.service';
 import { CreateCityDto, UpdateCityDto } from './dto';
 import { Public, Roles } from '../../../common/decorators';
 import { RolesGuard } from '../../../common/guards';
 import { Role } from '../../../common/enums';
 
+@ApiTags('Cities')
 @Controller('cities')
 export class CitiesController {
   constructor(private readonly citiesService: CitiesService) {}
@@ -35,6 +37,7 @@ export class CitiesController {
   }
 
   // Admin only - create city
+  @ApiBearerAuth('JWT-auth')
   @Post()
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
@@ -43,6 +46,7 @@ export class CitiesController {
   }
 
   // Admin only - update city
+  @ApiBearerAuth('JWT-auth')
   @Patch(':id')
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
@@ -54,6 +58,7 @@ export class CitiesController {
   }
 
   // Admin only - delete city
+  @ApiBearerAuth('JWT-auth')
   @Delete(':id')
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)

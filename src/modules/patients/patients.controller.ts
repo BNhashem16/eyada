@@ -9,6 +9,7 @@ import {
   UseGuards,
   ParseUUIDPipe,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { PatientsService } from './patients.service';
 import {
   CreatePatientProfileDto,
@@ -20,6 +21,8 @@ import { RolesGuard } from '../../common/guards';
 import { Role } from '../../common/enums';
 import { JwtUserPayload } from '../../common/interfaces';
 
+@ApiTags('Patients')
+@ApiBearerAuth('JWT-auth')
 @Controller('patients')
 @UseGuards(RolesGuard)
 @Roles(Role.PATIENT)

@@ -9,6 +9,7 @@ import {
   ParseUUIDPipe,
   Query,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AppointmentsService } from './appointments.service';
 import {
   CreateAppointmentDto,
@@ -25,6 +26,8 @@ import { Role } from '../../common/enums';
 import { JwtUserPayload } from '../../common/interfaces';
 
 // Patient endpoints
+@ApiTags('Patients - Appointments')
+@ApiBearerAuth('JWT-auth')
 @Controller('patients/appointments')
 @UseGuards(RolesGuard)
 @Roles(Role.PATIENT)
@@ -74,6 +77,8 @@ export class PatientAppointmentsController {
 }
 
 // Doctor endpoints
+@ApiTags('Doctors - Appointments')
+@ApiBearerAuth('JWT-auth')
 @Controller('doctors/appointments')
 @UseGuards(RolesGuard)
 @Roles(Role.DOCTOR)
@@ -130,6 +135,8 @@ export class DoctorAppointmentsController {
 }
 
 // Secretary endpoints
+@ApiTags('Secretary - Appointments')
+@ApiBearerAuth('JWT-auth')
 @Controller('secretary/appointments')
 @UseGuards(RolesGuard)
 @Roles(Role.SECRETARY)
