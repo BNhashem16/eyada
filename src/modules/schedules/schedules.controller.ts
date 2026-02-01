@@ -11,6 +11,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { SkipThrottle } from '@nestjs/throttler';
 import { SchedulesService } from './schedules.service';
 import { CreateScheduleDto, UpdateScheduleDto } from './dto';
 import { Roles, CurrentUser, Public } from '../../common/decorators';
@@ -47,6 +48,7 @@ export class SchedulesPublicController {
 // Doctor management of schedules
 @ApiTags('Doctors - Schedules')
 @ApiBearerAuth('JWT-auth')
+@SkipThrottle()
 @Controller('doctors/clinics/:clinicId/schedules')
 @UseGuards(RolesGuard)
 @Roles(Role.DOCTOR)

@@ -393,10 +393,6 @@ export class DoctorsService {
       throw new BilingualNotFoundException(ErrorMessages.DOCTOR_NOT_FOUND);
     }
 
-    if (profile.status !== DoctorStatus.PENDING) {
-      throw new BilingualBadRequestException(ErrorMessages.DOCTOR_NOT_PENDING);
-    }
-
     // Update both the profile and user
     const [updatedProfile] = await this.prisma.$transaction([
       this.prisma.doctorProfile.update({
@@ -409,7 +405,7 @@ export class DoctorsService {
       }),
       this.prisma.user.update({
         where: { id: profile.userId },
-        data: { isApproved: true },
+        data: { isApproved: true, isActive: true },
       }),
     ]);
 
