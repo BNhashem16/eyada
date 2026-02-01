@@ -16,12 +16,13 @@ import {
   UpdateAppointmentStatusDto,
   UpdateMedicalNotesDto,
   UpdatePaymentStatusDto,
+  PatientAppointmentFilterDto,
+  AppointmentFilterDto,
 } from './dto';
 import { Roles, CurrentUser } from '../../common/decorators';
 import { RolesGuard } from '../../common/guards';
 import { Role } from '../../common/enums';
 import { JwtUserPayload } from '../../common/interfaces';
-import { AppointmentStatus } from '@prisma/client';
 
 // Patient endpoints
 @Controller('patients/appointments')
@@ -33,9 +34,9 @@ export class PatientAppointmentsController {
   @Get()
   findMyAppointments(
     @CurrentUser() user: JwtUserPayload,
-    @Query('status') status?: AppointmentStatus,
+    @Query() filterDto: PatientAppointmentFilterDto,
   ) {
-    return this.appointmentsService.findByPatient(user.id, status);
+    return this.appointmentsService.findByPatient(user.id, filterDto);
   }
 
   @Post()
@@ -82,16 +83,9 @@ export class DoctorAppointmentsController {
   @Get()
   findMyAppointments(
     @CurrentUser() user: JwtUserPayload,
-    @Query('clinicId') clinicId?: string,
-    @Query('date') dateStr?: string,
-    @Query('status') status?: AppointmentStatus,
+    @Query() filterDto: AppointmentFilterDto,
   ) {
-    const date = dateStr ? new Date(dateStr) : undefined;
-    return this.appointmentsService.findByDoctor(user.id, {
-      clinicId,
-      date,
-      status,
-    });
+    return this.appointmentsService.findByDoctor(user.id, filterDto);
   }
 
   @Get(':id')
@@ -150,16 +144,9 @@ export class SecretaryAppointmentsController {
   @Get()
   findClinicAppointments(
     @CurrentUser() user: JwtUserPayload,
-    @Query('clinicId') clinicId?: string,
-    @Query('date') dateStr?: string,
-    @Query('status') status?: AppointmentStatus,
+    @Query() filterDto: AppointmentFilterDto,
   ) {
-    const date = dateStr ? new Date(dateStr) : undefined;
-    return this.appointmentsService.findBySecretary(user.id, {
-      clinicId,
-      date,
-      status,
-    });
+    return this.appointmentsService.findBySecretary(user.id, filterDto);
   }
 
   @Post()

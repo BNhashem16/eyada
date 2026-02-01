@@ -11,7 +11,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ClinicsService } from './clinics.service';
-import { CreateClinicDto, UpdateClinicDto } from './dto';
+import { CreateClinicDto, UpdateClinicDto, ClinicSearchDto } from './dto';
 import { Roles, CurrentUser, Public } from '../../common/decorators';
 import { RolesGuard } from '../../common/guards';
 import { Role } from '../../common/enums';
@@ -21,14 +21,11 @@ import { JwtUserPayload } from '../../common/interfaces';
 export class ClinicsController {
   constructor(private readonly clinicsService: ClinicsService) {}
 
-  // Public endpoint - search clinics
+  // Public endpoint - search clinics with full filtering
   @Public()
   @Get()
-  findAll(
-    @Query('cityId') cityId?: string,
-    @Query('specialtyId') specialtyId?: string,
-  ) {
-    return this.clinicsService.findAll({ cityId, specialtyId });
+  findAll(@Query() searchDto: ClinicSearchDto) {
+    return this.clinicsService.findAll(searchDto);
   }
 
   // Public endpoint - get clinic details

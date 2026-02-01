@@ -65,6 +65,8 @@ export class DoctorsService {
       stateId,
       search,
       minRating,
+      priceMin,
+      priceMax,
     } = searchDto;
     const skip = (page - 1) * limit;
 
@@ -89,15 +91,32 @@ export class DoctorsService {
       };
     }
 
-    // If filtering by city or state, we need to check clinics
-    if (cityId || stateId) {
-      where.clinics = {
-        some: {
-          isActive: true,
-          ...(cityId && { cityId }),
-          ...(stateId && { city: { stateId } }),
-        },
+    // If filtering by city, state, or price, we need to check clinics
+    if (cityId || stateId || priceMin !== undefined || priceMax !== undefined) {
+      const clinicFilter: any = {
+        isActive: true,
       };
+
+      if (cityId) {
+        clinicFilter.cityId = cityId;
+      }
+
+      if (stateId) {
+        clinicFilter.city = { stateId };
+      }
+
+      // Filter by price range through service types
+      if (priceMin !== undefined || priceMax !== undefined) {
+        clinicFilter.serviceTypes = {
+          some: {
+            isActive: true,
+            ...(priceMin !== undefined && { price: { gte: priceMin } }),
+            ...(priceMax !== undefined && { price: { lte: priceMax } }),
+          },
+        };
+      }
+
+      where.clinics = { some: clinicFilter };
     }
 
     const [doctors, total] = await Promise.all([
@@ -121,6 +140,10 @@ export class DoctorsService {
               city: {
                 include: { state: true },
               },
+              serviceTypes: {
+                where: { isActive: true },
+                orderBy: { price: 'asc' },
+              },
             },
           },
         },
@@ -131,8 +154,20 @@ export class DoctorsService {
 
     const totalPages = Math.ceil(total / limit);
 
+    // Add min/max price to each doctor
+    const doctorsWithPrices = doctors.map((doctor) => {
+      const allPrices = doctor.clinics.flatMap((clinic) =>
+        clinic.serviceTypes.map((st) => Number(st.price)),
+      );
+      return {
+        ...doctor,
+        minPrice: allPrices.length > 0 ? Math.min(...allPrices) : null,
+        maxPrice: allPrices.length > 0 ? Math.max(...allPrices) : null,
+      };
+    });
+
     return {
-      data: doctors,
+      data: doctorsWithPrices,
       meta: {
         total,
         page,

@@ -1,160 +1,173 @@
 # Eyada Clinic Booking API - Postman Documentation
 
-## Overview
-
-This folder contains complete Postman collections for the Eyada Clinic Booking API with examples for all success and error cases.
-
 ## Collections
 
 | File | Description |
 |------|-------------|
-| `Eyada_API_Collection.postman_collection.json` | Health Check, Auth, Specialties, Locations (States & Cities) |
-| `Eyada_Part2_Doctors_Patients_Clinics.postman_collection.json` | Doctors, Patients, Clinics, Schedules, Services |
-| `Eyada_Part3_Appointments.postman_collection.json` | Patient, Doctor, and Secretary Appointments |
-
-## How to Import
-
-1. Open Postman
-2. Click **Import** button
-3. Drag all 3 JSON files or select them
-4. Collections will appear in sidebar
-
-## Variables
-
-All collections use these variables (auto-populated via test scripts):
-
-| Variable | Description |
-|----------|-------------|
-| `baseUrl` | API base URL (default: `http://localhost:3000`) |
-| `accessToken` | JWT access token (auto-set on login/register) |
-| `refreshToken` | JWT refresh token |
-| `userId` | Current user ID |
-| `doctorId` | Doctor ID |
-| `patientId` | Patient ID |
-| `clinicId` | Clinic ID |
-| `appointmentId` | Appointment ID |
-| `specialtyId` | Specialty ID |
-| `stateId` | State/Governorate ID |
-| `cityId` | City ID |
-| `serviceId` | Service type ID |
-| `scheduleId` | Schedule ID |
-| `familyMemberId` | Family member ID |
+| `Eyada_Complete_API.postman_collection.json` | **Main collection with all filters** |
+| `Eyada_API_Collection.postman_collection.json` | Auth, Specialties, Locations |
+| `Eyada_Part2_*.json` | Doctors, Patients, Clinics |
+| `Eyada_Part3_*.json` | Appointments |
 
 ## Quick Start
 
-### 1. Start the server
 ```bash
 npm run start:dev
 ```
 
-### 2. Register/Login
-Run one of these requests first to get tokens:
-- `Auth > Register - Patient`
-- `Auth > Register - Doctor`
-- `Auth > Login`
+Then import the collection in Postman.
 
-Tokens are automatically saved to collection variables.
+---
 
-### 3. Make authenticated requests
-All subsequent requests will use the saved `accessToken`.
+## Search & Filter Reference
 
-## API Roles
+### Doctors: `GET /doctors`
 
-| Role | Description | Access |
-|------|-------------|--------|
-| **ADMIN** | System administrator | All admin endpoints, approve/reject doctors |
-| **DOCTOR** | Medical doctor | Own profile, clinics, schedules, appointments |
-| **SECRETARY** | Clinic secretary | Clinic appointments, booking for patients |
-| **PATIENT** | Patient/Client | Own profile, booking, family members |
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `page` | number | Page number (default: 1) |
+| `limit` | number | Items per page (default: 20, max: 100) |
+| `specialtyId` | UUID | Filter by specialty |
+| `cityId` | UUID | Filter by city |
+| `stateId` | UUID | Filter by state |
+| `search` | string | Search by doctor name (Arabic/English) |
+| `minRating` | number | Minimum rating (0-5) |
+| `priceMin` | number | Minimum service price |
+| `priceMax` | number | Maximum service price |
 
-## Response Examples
+**Example:**
+```
+GET /doctors?specialtyId=xxx&minRating=4&priceMax=500
+```
 
-Each request includes multiple response examples:
-- **Success** - Expected successful response
-- **Error - Validation** - Invalid input (400)
-- **Error - Unauthorized** - Missing/invalid token (401)
-- **Error - Forbidden** - Insufficient permissions (403)
-- **Error - Not Found** - Resource doesn't exist (404)
-- **Error - Conflict** - Duplicate/conflict (409)
+---
+
+### Clinics: `GET /clinics`
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `page` | number | Page number |
+| `limit` | number | Items per page |
+| `cityId` | UUID | Filter by city |
+| `stateId` | UUID | Filter by state |
+| `specialtyId` | UUID | Filter by doctor's specialty |
+| `search` | string | Search by clinic name, address, or doctor name |
+| `priceMin` | number | Minimum service price |
+| `priceMax` | number | Maximum service price |
+| `minRating` | number | Minimum doctor rating |
+| `latitude` | number | User's latitude |
+| `longitude` | number | User's longitude |
+| `radiusKm` | number | Search radius in kilometers |
+
+**Example - Distance Search:**
+```
+GET /clinics?latitude=30.0626&longitude=31.3456&radiusKm=5
+```
+
+---
+
+### Patient Appointments: `GET /patients/appointments`
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `page` | number | Page number |
+| `limit` | number | Items per page |
+| `status` | enum | PENDING, CONFIRMED, CHECKED_IN, COMPLETED, CANCELLED, NO_SHOW |
+| `paymentStatus` | enum | PENDING, PAID, REFUNDED |
+| `dateFrom` | date | Start date (YYYY-MM-DD) |
+| `dateTo` | date | End date (YYYY-MM-DD) |
+| `clinicId` | UUID | Filter by clinic |
+| `doctorId` | UUID | Filter by doctor |
+| `upcoming` | boolean | Only future appointments |
+| `forFamilyMember` | boolean | true = family only, false = self only |
+
+**Example:**
+```
+GET /patients/appointments?upcoming=true&status=CONFIRMED
+```
+
+---
+
+### Doctor Appointments: `GET /doctors/appointments`
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `page` | number | Page number |
+| `limit` | number | Items per page |
+| `clinicId` | UUID | Filter by specific clinic |
+| `status` | enum | Appointment status |
+| `paymentStatus` | enum | Payment status |
+| `date` | date | Specific date (YYYY-MM-DD) |
+| `dateFrom` | date | Start date |
+| `dateTo` | date | End date |
+| `search` | string | Search by patient name or booking number |
+| `serviceTypeId` | UUID | Filter by service type |
+| `upcoming` | boolean | Only future appointments |
+
+**Example:**
+```
+GET /doctors/appointments?date=2024-01-20&status=PENDING
+GET /doctors/appointments?search=أحمد&paymentStatus=PENDING
+```
+
+---
+
+### Secretary Appointments: `GET /secretary/appointments`
+
+Same parameters as Doctor Appointments.
+
+---
+
+## Pagination Response Format
+
+```json
+{
+  "data": [...],
+  "meta": {
+    "total": 50,
+    "page": 1,
+    "limit": 20,
+    "totalPages": 3,
+    "hasNextPage": true,
+    "hasPreviousPage": false
+  }
+}
+```
+
+---
+
+## Status Values
+
+### Appointment Status
+- `PENDING` - Awaiting confirmation
+- `CONFIRMED` - Confirmed by doctor/secretary
+- `CHECKED_IN` - Patient arrived
+- `COMPLETED` - Appointment completed
+- `CANCELLED` - Cancelled
+- `NO_SHOW` - Patient didn't show up
+
+### Payment Status
+- `PENDING` - Not paid
+- `PAID` - Payment received
+- `REFUNDED` - Payment refunded
+
+---
 
 ## Validation Rules
 
+### Phone Number
+Egyptian format: `01[0125]XXXXXXXX`
+- 01012345678 ✓
+- 01112345678 ✓
+- 01212345678 ✓
+- 01512345678 ✓
+
 ### Password
 - Min 8 characters, max 50
-- Must contain: uppercase, lowercase, number or special character
-
-### Egyptian Phone Number
-- Format: `01[0125]XXXXXXXX`
-- Examples: `01012345678`, `01112345678`, `01212345678`, `01512345678`
+- Must have: uppercase, lowercase, number OR special char
 
 ### Time Format
-- 24-hour format: `HH:mm`
-- Examples: `09:00`, `14:30`, `21:00`
+24-hour: `HH:mm` (e.g., `09:00`, `14:30`)
 
 ### Date Format
-- ISO 8601: `YYYY-MM-DD`
-- Example: `2024-01-20`
-
-## Rate Limits
-
-| Type | Limit |
-|------|-------|
-| Short | 3 requests / 1 second |
-| Medium | 20 requests / 10 seconds |
-| Long | 100 requests / 60 seconds |
-| Login | 10 attempts / hour |
-
-## Token Expiry
-
-| Token | Validity |
-|-------|----------|
-| Access Token | 15 minutes |
-| Refresh Token | 7 days |
-
-## Common Endpoints
-
-### Public (No Auth)
-- `GET /` - Welcome
-- `GET /health` - Health check
-- `GET /specialties` - List specialties
-- `GET /states` - List states
-- `GET /cities` - List cities
-- `GET /doctors` - Search doctors
-- `GET /clinics` - Search clinics
-- `GET /clinics/:id/available-slots` - Get available slots
-
-### Auth Required
-- `GET /auth/me` - Current user
-- `POST /auth/logout` - Logout
-- `POST /auth/change-password` - Change password
-
-### Patient Only
-- `GET /patients/profile` - Get profile
-- `POST /patients/appointments` - Book appointment
-- `POST /patients/ratings` - Rate doctor
-
-### Doctor Only
-- `GET /doctors/profile/me` - Get profile
-- `POST /doctors/clinics` - Create clinic
-- `PATCH /doctors/appointments/:id/status` - Update appointment
-
-### Admin Only
-- `POST /specialties` - Create specialty
-- `GET /admin/doctors/pending` - Pending doctors
-- `PATCH /admin/doctors/:id/approve` - Approve doctor
-
-## Tips
-
-1. **Auto Token Refresh**: Login/Register requests automatically save tokens
-2. **Test Scripts**: Many requests save IDs automatically for chaining
-3. **Disabled Params**: Query params can be enabled by unchecking "disabled"
-4. **Arabic Support**: All name/description fields support Arabic and English
-
-## Need Help?
-
-Check the API source code in:
-- `src/modules/auth/` - Authentication
-- `src/modules/doctors/` - Doctor endpoints
-- `src/modules/patients/` - Patient endpoints
-- `src/modules/clinics/` - Clinic management
-- `src/modules/appointments/` - Appointments
+ISO 8601: `YYYY-MM-DD` (e.g., `2024-01-20`)

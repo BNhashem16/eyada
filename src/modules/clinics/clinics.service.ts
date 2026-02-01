@@ -6,8 +6,9 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma';
-import { CreateClinicDto, UpdateClinicDto } from './dto';
+import { CreateClinicDto, UpdateClinicDto, ClinicSearchDto } from './dto';
 import { Clinic } from '@prisma/client';
+import { PaginatedResult } from '../../common/interfaces';
 
 @Injectable()
 export class ClinicsService {
@@ -185,56 +186,183 @@ export class ClinicsService {
     });
   }
 
-  // Public methods for searching clinics
-  async findAll(filters: {
-    cityId?: string;
-    specialtyId?: string;
-    isActive?: boolean;
-  }): Promise<Clinic[]> {
+  // Public methods for searching clinics with full filtering
+  async findAll(searchDto: ClinicSearchDto): Promise<PaginatedResult<any>> {
+    const {
+      page = 1,
+      limit = 20,
+      cityId,
+      stateId,
+      specialtyId,
+      search,
+      priceMin,
+      priceMax,
+      minRating,
+      latitude,
+      longitude,
+      radiusKm,
+    } = searchDto;
+    const skip = (page - 1) * limit;
+
+    // Build where clause
     const where: any = {
-      isActive: filters.isActive ?? true,
+      isActive: true,
+      doctorProfile: {
+        status: 'APPROVED',
+        user: { isActive: true },
+      },
     };
 
-    if (filters.cityId) {
-      where.cityId = filters.cityId;
+    // Filter by city
+    if (cityId) {
+      where.cityId = cityId;
     }
 
-    if (filters.specialtyId) {
+    // Filter by state (through city)
+    if (stateId) {
+      where.city = { stateId };
+    }
+
+    // Filter by specialty
+    if (specialtyId) {
       where.doctorProfile = {
-        specialtyId: filters.specialtyId,
-        status: 'APPROVED',
-      };
-    } else {
-      where.doctorProfile = {
-        status: 'APPROVED',
+        ...where.doctorProfile,
+        specialtyId,
       };
     }
 
-    return this.prisma.clinic.findMany({
-      where,
-      include: {
-        doctorProfile: {
-          include: {
+    // Filter by doctor's minimum rating
+    if (minRating) {
+      where.doctorProfile = {
+        ...where.doctorProfile,
+        averageRating: { gte: minRating },
+      };
+    }
+
+    // Search by clinic name, doctor name, or address
+    if (search) {
+      where.OR = [
+        { name: { path: ['en'], string_contains: search } },
+        { name: { path: ['ar'], string_contains: search } },
+        { address: { path: ['en'], string_contains: search } },
+        { address: { path: ['ar'], string_contains: search } },
+        {
+          doctorProfile: {
             user: {
-              select: {
-                id: true,
-                fullName: true,
-              },
+              fullName: { contains: search, mode: 'insensitive' },
             },
-            specialty: true,
           },
         },
-        city: {
-          include: {
-            state: true,
+      ];
+    }
+
+    // Filter by price range (check service types)
+    if (priceMin !== undefined || priceMax !== undefined) {
+      where.serviceTypes = {
+        some: {
+          isActive: true,
+          ...(priceMin !== undefined && { price: { gte: priceMin } }),
+          ...(priceMax !== undefined && { price: { lte: priceMax } }),
+        },
+      };
+    }
+
+    const [clinics, total] = await Promise.all([
+      this.prisma.clinic.findMany({
+        where,
+        skip,
+        take: limit,
+        include: {
+          doctorProfile: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  fullName: true,
+                  phoneNumber: true,
+                },
+              },
+              specialty: true,
+            },
+          },
+          city: {
+            include: {
+              state: true,
+            },
+          },
+          serviceTypes: {
+            where: { isActive: true },
+            orderBy: { price: 'asc' },
           },
         },
-        serviceTypes: {
-          where: { isActive: true },
-        },
+        orderBy: [
+          { doctorProfile: { averageRating: 'desc' } },
+          { createdAt: 'desc' },
+        ],
+      }),
+      this.prisma.clinic.count({ where }),
+    ]);
+
+    // If distance-based filtering is requested, calculate distances
+    let filteredClinics = clinics;
+    if (latitude && longitude && radiusKm) {
+      filteredClinics = clinics.filter((clinic) => {
+        if (!clinic.latitude || !clinic.longitude) return false;
+        const distance = this.calculateDistance(
+          latitude,
+          longitude,
+          clinic.latitude,
+          clinic.longitude,
+        );
+        return distance <= radiusKm;
+      });
+    }
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: filteredClinics.map((clinic) => ({
+        ...clinic,
+        minPrice: clinic.serviceTypes.length > 0
+          ? Math.min(...clinic.serviceTypes.map((s) => Number(s.price)))
+          : null,
+        maxPrice: clinic.serviceTypes.length > 0
+          ? Math.max(...clinic.serviceTypes.map((s) => Number(s.price)))
+          : null,
+      })),
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
       },
-      orderBy: { createdAt: 'desc' },
-    });
+    };
+  }
+
+  // Haversine formula for distance calculation
+  private calculateDistance(
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number,
+  ): number {
+    const R = 6371; // Earth's radius in kilometers
+    const dLat = this.toRad(lat2 - lat1);
+    const dLon = this.toRad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(this.toRad(lat1)) *
+        Math.cos(this.toRad(lat2)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  private toRad(deg: number): number {
+    return deg * (Math.PI / 180);
   }
 
   private async verifyOwnership(

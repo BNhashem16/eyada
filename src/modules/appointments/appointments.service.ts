@@ -12,7 +12,10 @@ import {
   UpdateAppointmentStatusDto,
   UpdateMedicalNotesDto,
   UpdatePaymentStatusDto,
+  PatientAppointmentFilterDto,
+  AppointmentFilterDto,
 } from './dto';
+import { PaginatedResult } from '../../common/interfaces';
 import {
   Appointment,
   AppointmentStatus,
@@ -206,11 +209,25 @@ export class AppointmentsService {
     });
   }
 
-  // Get patient's appointments
+  // Get patient's appointments with full filtering
   async findByPatient(
     patientUserId: string,
-    status?: AppointmentStatus,
-  ): Promise<Appointment[]> {
+    filterDto: PatientAppointmentFilterDto,
+  ): Promise<PaginatedResult<any>> {
+    const {
+      page = 1,
+      limit = 20,
+      status,
+      paymentStatus,
+      dateFrom,
+      dateTo,
+      clinicId,
+      doctorId,
+      upcoming,
+      forFamilyMember,
+    } = filterDto;
+    const skip = (page - 1) * limit;
+
     const patientProfile = await this.prisma.patientProfile.findUnique({
       where: { userId: patientUserId },
       include: {
@@ -222,66 +239,140 @@ export class AppointmentsService {
       throw new NotFoundException('Patient profile not found');
     }
 
-    // Get appointments for self and family members
-    const patientIds = [
-      patientProfile.id,
-      ...patientProfile.familyMembers.map((fm) => fm.id),
-    ];
+    // Determine which patient IDs to include
+    let patientIds: string[];
+    if (forFamilyMember === true) {
+      // Only family members
+      patientIds = patientProfile.familyMembers.map((fm) => fm.id);
+    } else if (forFamilyMember === false) {
+      // Only self
+      patientIds = [patientProfile.id];
+    } else {
+      // Both self and family members
+      patientIds = [
+        patientProfile.id,
+        ...patientProfile.familyMembers.map((fm) => fm.id),
+      ];
+    }
 
     const where: any = {
       bookedForPatientId: { in: patientIds },
     };
 
+    // Filter by status
     if (status) {
       where.status = status;
     }
 
-    return this.prisma.appointment.findMany({
-      where,
-      include: {
-        bookedForPatient: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                fullName: true,
-              },
-            },
-          },
-        },
-        clinic: {
-          include: {
-            doctorProfile: {
-              include: {
-                user: {
-                  select: {
-                    id: true,
-                    fullName: true,
-                  },
+    // Filter by payment status
+    if (paymentStatus) {
+      where.paymentStatus = paymentStatus;
+    }
+
+    // Filter by date range
+    if (dateFrom || dateTo) {
+      where.appointmentDate = {};
+      if (dateFrom) {
+        where.appointmentDate.gte = new Date(dateFrom);
+      }
+      if (dateTo) {
+        where.appointmentDate.lte = new Date(dateTo);
+      }
+    }
+
+    // Filter upcoming only
+    if (upcoming) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      where.appointmentDate = { ...where.appointmentDate, gte: today };
+    }
+
+    // Filter by clinic
+    if (clinicId) {
+      where.clinicId = clinicId;
+    }
+
+    // Filter by doctor
+    if (doctorId) {
+      where.doctorProfileId = doctorId;
+    }
+
+    const [appointments, total] = await Promise.all([
+      this.prisma.appointment.findMany({
+        where,
+        skip,
+        take: limit,
+        include: {
+          bookedForPatient: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  fullName: true,
                 },
-                specialty: true,
               },
             },
-            city: {
-              include: { state: true },
+          },
+          clinic: {
+            include: {
+              doctorProfile: {
+                include: {
+                  user: {
+                    select: {
+                      id: true,
+                      fullName: true,
+                    },
+                  },
+                  specialty: true,
+                },
+              },
+              city: {
+                include: { state: true },
+              },
             },
           },
+          serviceType: true,
         },
-        serviceType: true,
+        orderBy: [{ appointmentDate: 'desc' }, { appointmentTime: 'desc' }],
+      }),
+      this.prisma.appointment.count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: appointments,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
       },
-      orderBy: [{ appointmentDate: 'desc' }, { appointmentTime: 'desc' }],
-    });
+    };
   }
 
-  // Get doctor's appointments
+  // Get doctor's appointments with full filtering
   async findByDoctor(
     doctorUserId: string,
-    filters: {
-      clinicId?: string;
-      date?: Date;
-      status?: AppointmentStatus;
-    },
-  ): Promise<Appointment[]> {
+    filterDto: AppointmentFilterDto,
+  ): Promise<PaginatedResult<any>> {
+    const {
+      page = 1,
+      limit = 20,
+      clinicId,
+      status,
+      paymentStatus,
+      date,
+      dateFrom,
+      dateTo,
+      search,
+      serviceTypeId,
+      upcoming,
+    } = filterDto;
+    const skip = (page - 1) * limit;
+
     const doctorProfile = await this.prisma.doctorProfile.findUnique({
       where: { userId: doctorUserId },
       include: {
@@ -299,40 +390,107 @@ export class AppointmentsService {
       clinicId: { in: clinicIds },
     };
 
-    if (filters.clinicId) {
-      if (!clinicIds.includes(filters.clinicId)) {
+    // Filter by specific clinic
+    if (clinicId) {
+      if (!clinicIds.includes(clinicId)) {
         throw new ForbiddenException('You do not own this clinic');
       }
-      where.clinicId = filters.clinicId;
+      where.clinicId = clinicId;
     }
 
-    if (filters.date) {
-      where.appointmentDate = filters.date;
+    // Filter by status
+    if (status) {
+      where.status = status;
     }
 
-    if (filters.status) {
-      where.status = filters.status;
+    // Filter by payment status
+    if (paymentStatus) {
+      where.paymentStatus = paymentStatus;
     }
 
-    return this.prisma.appointment.findMany({
-      where,
-      include: {
-        bookedForPatient: {
-          include: {
+    // Filter by single date
+    if (date) {
+      const appointmentDate = new Date(date);
+      appointmentDate.setHours(0, 0, 0, 0);
+      where.appointmentDate = appointmentDate;
+    }
+
+    // Filter by date range
+    if (dateFrom || dateTo) {
+      where.appointmentDate = {};
+      if (dateFrom) {
+        where.appointmentDate.gte = new Date(dateFrom);
+      }
+      if (dateTo) {
+        where.appointmentDate.lte = new Date(dateTo);
+      }
+    }
+
+    // Filter upcoming only
+    if (upcoming) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      where.appointmentDate = { ...where.appointmentDate, gte: today };
+    }
+
+    // Filter by service type
+    if (serviceTypeId) {
+      where.serviceTypeId = serviceTypeId;
+    }
+
+    // Search by patient name or booking number
+    if (search) {
+      where.OR = [
+        { bookingNumber: { contains: search, mode: 'insensitive' } },
+        { patientName: { contains: search, mode: 'insensitive' } },
+        {
+          bookedForPatient: {
             user: {
-              select: {
-                id: true,
-                fullName: true,
-                phoneNumber: true,
-              },
+              fullName: { contains: search, mode: 'insensitive' },
             },
           },
         },
-        clinic: true,
-        serviceType: true,
+      ];
+    }
+
+    const [appointments, total] = await Promise.all([
+      this.prisma.appointment.findMany({
+        where,
+        skip,
+        take: limit,
+        include: {
+          bookedForPatient: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  fullName: true,
+                  phoneNumber: true,
+                },
+              },
+            },
+          },
+          clinic: true,
+          serviceType: true,
+        },
+        orderBy: [{ appointmentDate: 'asc' }, { queueNumber: 'asc' }],
+      }),
+      this.prisma.appointment.count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: appointments,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
       },
-      orderBy: [{ appointmentDate: 'asc' }, { queueNumber: 'asc' }],
-    });
+    };
   }
 
   // Get appointment by ID
@@ -760,15 +918,26 @@ export class AppointmentsService {
     });
   }
 
-  // Get appointments for secretary's clinic(s)
+  // Get appointments for secretary's clinic(s) with full filtering
   async findBySecretary(
     secretaryUserId: string,
-    filters: {
-      clinicId?: string;
-      date?: Date;
-      status?: AppointmentStatus;
-    },
-  ): Promise<Appointment[]> {
+    filterDto: AppointmentFilterDto,
+  ): Promise<PaginatedResult<any>> {
+    const {
+      page = 1,
+      limit = 20,
+      clinicId,
+      status,
+      paymentStatus,
+      date,
+      dateFrom,
+      dateTo,
+      search,
+      serviceTypeId,
+      upcoming,
+    } = filterDto;
+    const skip = (page - 1) * limit;
+
     // Get secretary's assigned clinics
     const secretaryAssignments = await this.prisma.clinicSecretary.findMany({
       where: {
@@ -789,53 +958,120 @@ export class AppointmentsService {
       clinicId: { in: clinicIds },
     };
 
-    if (filters.clinicId) {
-      if (!clinicIds.includes(filters.clinicId)) {
+    // Filter by specific clinic
+    if (clinicId) {
+      if (!clinicIds.includes(clinicId)) {
         throw new ForbiddenException('You do not have access to this clinic');
       }
-      where.clinicId = filters.clinicId;
+      where.clinicId = clinicId;
     }
 
-    if (filters.date) {
-      where.appointmentDate = filters.date;
+    // Filter by status
+    if (status) {
+      where.status = status;
     }
 
-    if (filters.status) {
-      where.status = filters.status;
+    // Filter by payment status
+    if (paymentStatus) {
+      where.paymentStatus = paymentStatus;
     }
 
-    return this.prisma.appointment.findMany({
-      where,
-      include: {
-        bookedForPatient: {
-          include: {
+    // Filter by single date
+    if (date) {
+      const appointmentDate = new Date(date);
+      appointmentDate.setHours(0, 0, 0, 0);
+      where.appointmentDate = appointmentDate;
+    }
+
+    // Filter by date range
+    if (dateFrom || dateTo) {
+      where.appointmentDate = {};
+      if (dateFrom) {
+        where.appointmentDate.gte = new Date(dateFrom);
+      }
+      if (dateTo) {
+        where.appointmentDate.lte = new Date(dateTo);
+      }
+    }
+
+    // Filter upcoming only
+    if (upcoming) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      where.appointmentDate = { ...where.appointmentDate, gte: today };
+    }
+
+    // Filter by service type
+    if (serviceTypeId) {
+      where.serviceTypeId = serviceTypeId;
+    }
+
+    // Search by patient name or booking number
+    if (search) {
+      where.OR = [
+        { bookingNumber: { contains: search, mode: 'insensitive' } },
+        { patientName: { contains: search, mode: 'insensitive' } },
+        {
+          bookedForPatient: {
             user: {
-              select: {
-                id: true,
-                fullName: true,
-                phoneNumber: true,
-              },
+              fullName: { contains: search, mode: 'insensitive' },
             },
           },
         },
-        clinic: {
-          include: {
-            doctorProfile: {
-              include: {
-                user: {
-                  select: {
-                    id: true,
-                    fullName: true,
+      ];
+    }
+
+    const [appointments, total] = await Promise.all([
+      this.prisma.appointment.findMany({
+        where,
+        skip,
+        take: limit,
+        include: {
+          bookedForPatient: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  fullName: true,
+                  phoneNumber: true,
+                },
+              },
+            },
+          },
+          clinic: {
+            include: {
+              doctorProfile: {
+                include: {
+                  user: {
+                    select: {
+                      id: true,
+                      fullName: true,
+                    },
                   },
                 },
               },
             },
           },
+          serviceType: true,
         },
-        serviceType: true,
+        orderBy: [{ appointmentDate: 'asc' }, { queueNumber: 'asc' }],
+      }),
+      this.prisma.appointment.count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: appointments,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
       },
-      orderBy: [{ appointmentDate: 'asc' }, { queueNumber: 'asc' }],
-    });
+    };
   }
 
   // Get secretary's assigned clinics
